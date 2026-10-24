@@ -1,5 +1,6 @@
 import React from 'react';
 import { GEM_BID_NUMBER, INSTITUTION_NAME, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
+import { LUMINA_LOGO_FALLBACK, LUMINA_LOGO_PATH } from '../data/logoData';
 import { ShieldCheck, FileText, Search, Info } from 'lucide-react';
 
 interface HeaderProps {
@@ -35,9 +36,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-lg bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
             <img
-              src="/src/assets/images/lumina_logo.jpeg"
-              alt="Lumina Logo"
+              src={LUMINA_LOGO_FALLBACK}
+              alt="Lumina Business Consulting Services Logo"
               className="w-full h-full object-contain"
+              loading="eager"
             />
           </div>
           <div>

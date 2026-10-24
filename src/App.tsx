@@ -22,6 +22,7 @@ import {
   AGENCY_NAME,
   AGENCY_ADDRESS
 } from './data/assamDistricts';
+import { LUMINA_LOGO_FALLBACK } from './data/logoData';
 import {
   Shield,
   Building2,
@@ -191,7 +192,7 @@ export default function App() {
               {/* Subtle background */}
               <div className="absolute inset-0">
                 <img
-                  src="/src/assets/images/lumina_logo.jpeg"
+                  src={LUMINA_LOGO_FALLBACK}
                   alt="Lumina Business Consulting Services"
                   className="w-full h-full object-cover opacity-10 filter blur-xs"
                 />
@@ -204,9 +205,10 @@ export default function App() {
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-3 border-b border-white/10">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-xl p-1.5 shadow-md flex items-center justify-center shrink-0">
                     <img
-                      src="/src/assets/images/lumina_logo.jpeg"
+                      src={LUMINA_LOGO_FALLBACK}
                       alt="Lumina Business Consulting Services"
                       className="w-full h-full object-contain"
+                      loading="eager"
                     />
                   </div>
                   <div>
