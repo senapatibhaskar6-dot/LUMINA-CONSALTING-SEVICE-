@@ -10,7 +10,6 @@ import {
   FileCheck,
   ShieldCheck,
   AlertTriangle,
-  Sparkles,
   HelpCircle,
   Calendar
 } from 'lucide-react';
@@ -187,90 +186,17 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
     }
   };
 
-  // Quick fill samples for evaluator convenience
-  const fillSample = (role: SecurityPosition) => {
-    if (role === 'Security Supervisor') {
-      setFormData({
-        position: 'Security Supervisor',
-        fullName: 'BHASKAR JYOTI KALITA',
-        fatherName: 'Late Bipul Chandra Kalita',
-        dob: '1992-05-14',
-        gender: 'Male',
-        qualification: 'Graduate (BA / B.Sc / B.Com / BCA)',
-        villageTown: 'Barpeta Town, Ward No 4',
-        postOffice: 'Barpeta P.O.',
-        district: 'Barpeta',
-        pinCode: '781301',
-        contactNumber: '9864201934',
-        aadhaarNumber: '748291038491',
-        email: 'bhaskar.sec.bmch@gmail.com',
-        experienceYears: '4',
-        isExServicemen: 'No',
-        exServicemenDetails: '',
-        drivingLicenseNo: 'AS-15-20150029381',
-        drivingLicenseValidUpTo: '2029-08-20',
-        acceptedDeclaration: true,
-      });
-    } else {
-      setFormData({
-        position: 'Unarmed Security Guard',
-        fullName: 'PRANJAL NATH',
-        fatherName: 'Dineswar Nath',
-        dob: '1997-11-22',
-        gender: 'Male',
-        qualification: 'Class 10th Pass (Matriculate / HSLC)',
-        villageTown: 'Howly Pathsala Road',
-        postOffice: 'Howly',
-        district: 'Barpeta',
-        pinCode: '781316',
-        contactNumber: '9435182940',
-        aadhaarNumber: '619283740192',
-        email: 'pranjalnath.sec@gmail.com',
-        experienceYears: '2',
-        isExServicemen: 'No',
-        exServicemenDetails: '',
-        drivingLicenseNo: '',
-        drivingLicenseValidUpTo: '',
-        acceptedDeclaration: true,
-      });
-    }
-    setErrors({});
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Sample Fast-Fill Bar for testing */}
-      <div className="bg-slate-100/90 border border-slate-200 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-slate-700 font-medium">
-          <Sparkles className="w-4 h-4 text-sky-800" />
-          <span>Quick Autofill for Testing & Demo:</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => fillSample('Security Supervisor')}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg font-semibold text-slate-700 transition-colors cursor-pointer"
-          >
-            Autofill Supervisor Sample
-          </button>
-          <button
-            type="button"
-            onClick={() => fillSample('Unarmed Security Guard')}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg font-semibold text-slate-700 transition-colors cursor-pointer"
-          >
-            Autofill Guard Sample
-          </button>
-        </div>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-8">
 
       {/* 1. Position & Salary Selection */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2.5 pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
+          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm shrink-0">
             1
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-base font-bold text-slate-900 leading-tight">
               Position & Remuneration Details
             </h2>
             <p className="text-xs text-slate-500">
@@ -286,20 +212,20 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       </div>
 
       {/* 2. Personal Details */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2.5 pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
+          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm shrink-0">
             2
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Personal Details</h2>
+            <h2 className="text-base font-bold text-slate-900 leading-tight">Personal Details</h2>
             <p className="text-xs text-slate-500">
               Must match with your Aadhaar and official government identity proofs
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Full Name in Capital Letters */}
           <div className="md:col-span-2">
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
@@ -312,7 +238,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
                 onChange={(e) => handleChange('fullName', e.target.value)}
                 onBlur={() => handleBlur('fullName')}
                 placeholder="E.G. RAMESH CHANDRA BARMAN"
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-semibold tracking-wide uppercase transition-colors outline-none ${
+                className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm font-semibold tracking-wide uppercase transition-colors outline-none ${
                   errors.fullName
                     ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                     : 'border-slate-300 focus:border-sky-800'
@@ -341,7 +267,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               onChange={(e) => handleChange('fatherName', e.target.value)}
               onBlur={() => handleBlur('fatherName')}
               placeholder="Enter Father's or Guardian's full name"
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm transition-colors outline-none ${
                 errors.fatherName
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -364,7 +290,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
                 onChange={(e) => handleChange('dob', e.target.value)}
                 onBlur={() => handleBlur('dob')}
                 max={new Date().toISOString().split('T')[0]}
-                className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors outline-none ${
+                className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm transition-colors outline-none ${
                   errors.dob
                     ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                     : 'border-slate-300 focus:border-sky-800'
@@ -389,7 +315,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               value={formData.gender}
               onChange={(e) => handleChange('gender', e.target.value)}
               onBlur={() => handleBlur('gender')}
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm bg-white transition-colors outline-none cursor-pointer ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm bg-white transition-colors outline-none cursor-pointer ${
                 errors.gender
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -414,7 +340,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               value={formData.qualification}
               onChange={(e) => handleChange('qualification', e.target.value)}
               onBlur={() => handleBlur('qualification')}
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm bg-white transition-colors outline-none cursor-pointer ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm bg-white transition-colors outline-none cursor-pointer ${
                 errors.qualification
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -435,20 +361,20 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       </div>
 
       {/* 3. Address Details */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2.5 pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
+          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm shrink-0">
             3
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Residential Address Details</h2>
+            <h2 className="text-base font-bold text-slate-900 leading-tight">Residential Address Details</h2>
             <p className="text-xs text-slate-500">
               Permanent / Present residence in Assam
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Vill / Town */}
           <div>
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
@@ -460,7 +386,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               onChange={(e) => handleChange('villageTown', e.target.value)}
               onBlur={() => handleBlur('villageTown')}
               placeholder="e.g. Ward No 3, Barpeta Town"
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm transition-colors outline-none ${
                 errors.villageTown
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -482,7 +408,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               onChange={(e) => handleChange('postOffice', e.target.value)}
               onBlur={() => handleBlur('postOffice')}
               placeholder="e.g. Barpeta H.O."
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm transition-colors outline-none ${
                 errors.postOffice
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -502,7 +428,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               value={formData.district}
               onChange={(e) => handleChange('district', e.target.value)}
               onBlur={() => handleBlur('district')}
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm bg-white transition-colors outline-none cursor-pointer ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm bg-white transition-colors outline-none cursor-pointer ${
                 errors.district
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -527,12 +453,15 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
             </label>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="postal-code"
               value={formData.pinCode}
               onChange={(e) => handleChange('pinCode', e.target.value)}
               onBlur={() => handleBlur('pinCode')}
               placeholder="e.g. 781301"
               maxLength={6}
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-mono tracking-wider transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm font-mono tracking-wider transition-colors outline-none ${
                 errors.pinCode
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -546,37 +475,40 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       </div>
 
       {/* 4. Contact Details & Aadhaar */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2.5 pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
+          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm shrink-0">
             4
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Contact & Identity Proof</h2>
+            <h2 className="text-base font-bold text-slate-900 leading-tight">Contact & Identity Proof</h2>
             <p className="text-xs text-slate-500">
               Payment confirmation & interview date alerts will be sent to this phone number
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Contact Number */}
           <div>
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
               Contact Number (Mobile) <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center">
-              <span className="inline-flex items-center px-3 py-2.5 rounded-l-lg border border-r-0 border-slate-300 bg-slate-100 text-slate-600 text-sm font-semibold">
+              <span className="inline-flex items-center px-3.5 py-3 min-h-[46px] rounded-l-xl border border-r-0 border-slate-300 bg-slate-100 text-slate-700 text-base sm:text-sm font-bold">
                 +91
               </span>
               <input
-                type="text"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                autoComplete="tel"
                 value={formData.contactNumber}
                 onChange={(e) => handleChange('contactNumber', e.target.value)}
                 onBlur={() => handleBlur('contactNumber')}
                 placeholder="10-digit mobile number"
                 maxLength={10}
-                className={`w-full px-3.5 py-2.5 rounded-r-lg border text-sm font-mono tracking-wider transition-colors outline-none ${
+                className={`w-full px-3.5 py-3 min-h-[46px] rounded-r-xl border text-base sm:text-sm font-mono tracking-wider transition-colors outline-none ${
                   errors.contactNumber
                     ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                     : 'border-slate-300 focus:border-sky-800'
@@ -599,12 +531,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
             </label>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={formData.aadhaarNumber}
               onChange={(e) => handleChange('aadhaarNumber', e.target.value)}
               onBlur={() => handleBlur('aadhaarNumber')}
               placeholder="12-digit Aadhaar or 16-digit VID"
               maxLength={16}
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-mono tracking-wider transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm font-mono tracking-wider transition-colors outline-none ${
                 errors.aadhaarNumber
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -626,30 +560,31 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
             </label>
             <input
               type="email"
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               placeholder="e.g. applicant@email.com (for e-receipt copy)"
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm transition-colors outline-none focus:border-sky-800"
+              className="w-full px-3.5 py-3 min-h-[46px] rounded-xl border border-slate-300 text-base sm:text-sm transition-colors outline-none focus:border-sky-800"
             />
           </div>
         </div>
       </div>
 
       {/* 5. Experience & License Details */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-100 mb-5">
-          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs">
+        <div className="flex items-center gap-2.5 pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
+          <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-900 flex items-center justify-center font-bold text-sm shrink-0">
             5
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-900">Experience & License Details</h2>
+            <h2 className="text-base font-bold text-slate-900 leading-tight">Experience & License Details</h2>
             <p className="text-xs text-slate-500">
               Note: Driving License is mandatory for Security Supervisor candidates
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Total Years of Experience */}
           <div>
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
@@ -658,7 +593,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
             <select
               value={formData.experienceYears}
               onChange={(e) => handleChange('experienceYears', e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm bg-white transition-colors outline-none cursor-pointer focus:border-sky-800"
+              className="w-full px-3.5 py-3 min-h-[46px] rounded-xl border border-slate-300 text-base sm:text-sm bg-white transition-colors outline-none cursor-pointer focus:border-sky-800"
             >
               <option value="0">Fresher (0 Years)</option>
               <option value="1">1 Year Experience</option>
@@ -675,34 +610,42 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
               Ex-Servicemen Status (Defense / Paramilitary) <span className="text-red-500">*</span>
             </label>
-            <div className="flex items-center gap-6 mt-2">
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+            <div className="grid grid-cols-2 gap-2 mt-1.5">
+              <label className={`p-3 min-h-[46px] rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors active:scale-[0.99] ${
+                formData.isExServicemen === 'No'
+                  ? 'bg-sky-50/70 border-sky-800 text-sky-950 font-bold'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 font-medium hover:bg-slate-100'
+              }`}>
                 <input
                   type="radio"
                   name="isExServicemen"
                   checked={formData.isExServicemen === 'No'}
                   onChange={() => handleChange('isExServicemen', 'No')}
-                  className="w-4 h-4 text-sky-900 focus:ring-sky-800"
+                  className="w-4 h-4 text-sky-900 focus:ring-sky-800 shrink-0"
                 />
-                <span>No</span>
+                <span className="text-sm">No</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+              <label className={`p-3 min-h-[46px] rounded-xl border flex items-center gap-2.5 cursor-pointer transition-colors active:scale-[0.99] ${
+                formData.isExServicemen === 'Yes'
+                  ? 'bg-sky-50/70 border-sky-800 text-sky-950 font-bold'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 font-medium hover:bg-slate-100'
+              }`}>
                 <input
                   type="radio"
                   name="isExServicemen"
                   checked={formData.isExServicemen === 'Yes'}
                   onChange={() => handleChange('isExServicemen', 'Yes')}
-                  className="w-4 h-4 text-sky-900 focus:ring-sky-800"
+                  className="w-4 h-4 text-sky-900 focus:ring-sky-800 shrink-0"
                 />
-                <span>Yes (Army / Navy / IAF / Assam Rifles / CRPF / BSF)</span>
+                <span className="text-sm">Yes (Veteran)</span>
               </label>
             </div>
           </div>
 
           {/* Ex-Servicemen Details if Yes */}
           {formData.isExServicemen === 'Yes' && (
-            <div className="md:col-span-2 p-3 bg-amber-50/70 rounded-lg border border-amber-200">
-              <label className="block text-xs font-bold text-amber-950 uppercase tracking-wider mb-1">
+            <div className="md:col-span-2 p-3 sm:p-4 bg-amber-50/70 rounded-xl border border-amber-200">
+              <label className="block text-xs font-bold text-amber-950 uppercase tracking-wider mb-1.5">
                 Discharge Book No / Regimental Force Details
               </label>
               <input
@@ -710,7 +653,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
                 value={formData.exServicemenDetails || ''}
                 onChange={(e) => handleChange('exServicemenDetails', e.target.value)}
                 placeholder="e.g. Ex-Naik 10 Assam Regiment, PPO / Discharge Book No: 12345/DIS"
-                className="w-full px-3 py-2 rounded border border-amber-300 text-sm bg-white focus:outline-none"
+                className="w-full px-3.5 py-3 min-h-[46px] rounded-xl border border-amber-300 text-base sm:text-sm bg-white focus:outline-none focus:border-amber-500"
               />
             </div>
           )}
@@ -733,7 +676,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               onChange={(e) => handleChange('drivingLicenseNo', e.target.value.toUpperCase())}
               onBlur={() => handleBlur('drivingLicenseNo')}
               placeholder="e.g. AS-15-20180012345"
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm font-mono uppercase tracking-wider transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm font-mono uppercase tracking-wider transition-colors outline-none ${
                 errors.drivingLicenseNo
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -763,7 +706,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               value={formData.drivingLicenseValidUpTo}
               onChange={(e) => handleChange('drivingLicenseValidUpTo', e.target.value)}
               onBlur={() => handleBlur('drivingLicenseValidUpTo')}
-              className={`w-full px-3.5 py-2.5 rounded-lg border text-sm transition-colors outline-none ${
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm transition-colors outline-none ${
                 errors.drivingLicenseValidUpTo
                   ? 'border-red-400 bg-red-50/30 focus:border-red-500'
                   : 'border-slate-300 focus:border-sky-800'
@@ -779,15 +722,15 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       </div>
 
       {/* 6. Terms & Conditions / Declaration */}
-      <div className="bg-sky-50/50 rounded-2xl p-6 border border-sky-200">
+      <div className="bg-sky-50/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-sky-200">
         <div className="flex items-center gap-2.5 pb-3 border-b border-sky-100 mb-4">
-          <FileCheck className="w-5 h-5 text-sky-900" />
-          <h2 className="text-base font-bold text-slate-900">
+          <FileCheck className="w-5 h-5 text-sky-900 shrink-0" />
+          <h2 className="text-base font-bold text-slate-900 leading-tight">
             Mandatory Declaration & Shift Commitment (BMCH)
           </h2>
         </div>
 
-        <div className="space-y-3 text-xs text-slate-700 leading-relaxed bg-white p-4 rounded-xl border border-sky-100">
+        <div className="space-y-3 text-xs text-slate-700 leading-relaxed bg-white p-3.5 sm:p-4 rounded-xl border border-sky-100">
           <p className="font-semibold text-slate-900">
             Barpeta Medical College and Hospital (BMCH) operates emergency, casualty, ICU, and inpatient hospital services on a round-the-clock basis (24x7).
           </p>
@@ -804,47 +747,47 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
           </ul>
         </div>
 
-        <div className="mt-4 pt-2">
-          <label className="flex items-start gap-3 cursor-pointer">
+        <div className="mt-4 pt-1">
+          <label className="p-3 sm:p-3.5 rounded-xl bg-white border border-sky-200 flex items-start gap-3 cursor-pointer active:bg-sky-50 transition-colors shadow-2xs">
             <input
               type="checkbox"
               checked={formData.acceptedDeclaration}
               onChange={(e) => handleChange('acceptedDeclaration', e.target.checked)}
-              className="w-5 h-5 rounded text-sky-900 border-slate-300 mt-0.5 focus:ring-sky-800"
+              className="w-5 h-5 rounded text-sky-900 border-slate-300 mt-0.5 focus:ring-sky-800 shrink-0"
             />
-            <span className="text-xs font-semibold text-slate-900 leading-normal">
+            <span className="text-xs sm:text-sm font-semibold text-slate-900 leading-normal">
               I accept the above terms and conditions and hereby give my solemn consent to perform duty in 3 shifts (24x7 basis) at Barpeta Medical College and Hospital (BMCH). <span className="text-red-500">*</span>
             </span>
           </label>
           {errors.acceptedDeclaration && (
             <p className="text-xs text-red-600 mt-2 font-medium flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5 inline" /> {errors.acceptedDeclaration}
+              <AlertTriangle className="w-3.5 h-3.5 inline shrink-0" /> {errors.acceptedDeclaration}
             </p>
           )}
         </div>
       </div>
 
       {/* 7. Fee & Submission Bar */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-6">
         <div>
           <div className="text-xs text-slate-500 font-medium">Non-Refundable Processing Fee:</div>
-          <div className="text-2xl font-extrabold text-slate-900 flex items-center gap-1 font-mono">
+          <div className="text-2xl font-extrabold text-slate-900 flex items-center gap-2 font-mono mt-0.5">
             <span>Rs. {APPLICATION_FEE}.00</span>
-            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 ml-2">
-              Payment Gateway Secured
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Cashfree Secured
             </span>
           </div>
           <div className="text-[11px] text-slate-400 mt-0.5">
-            GeM Reference: {GEM_BID_NUMBER} · Cashfree Payment Gateway Integration
+            GeM Reference: {GEM_BID_NUMBER}
           </div>
         </div>
 
         <button
           type="submit"
-          className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-sky-900 hover:bg-sky-800 text-white font-bold text-sm tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full sm:w-auto min-h-[50px] px-8 py-3.5 rounded-xl bg-sky-900 hover:bg-sky-800 active:scale-[0.98] text-white font-bold text-sm sm:text-base tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
         >
-          <CreditCard className="w-4 h-4 text-amber-300" />
-          <span>Proceed to Pay Rs. {APPLICATION_FEE} & Submit</span>
+          <CreditCard className="w-5 h-5 text-amber-300 shrink-0" />
+          <span>Pay Rs. {APPLICATION_FEE} & Submit Application</span>
         </button>
       </div>
     </form>

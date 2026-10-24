@@ -19,22 +19,21 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs no-print">
       {/* Top Government Bar */}
-      <div className="bg-slate-900 text-slate-100 text-xs px-4 py-1.5 flex flex-wrap items-center justify-between gap-4 font-medium">
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
-          <span>{AGENCY_NAME} · {AGENCY_ADDRESS}</span>
+      <div className="bg-slate-900 text-slate-100 text-[11px] sm:text-xs px-3 sm:px-4 py-1.5 flex items-center justify-between gap-2 font-medium">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span className="truncate">{AGENCY_NAME} · {AGENCY_ADDRESS}</span>
         </div>
-        <div className="flex items-center gap-4 text-slate-300">
-          <span>GeM Bid Ref: <strong className="text-white font-mono">{GEM_BID_NUMBER}</strong></span>
-          <span className="hidden sm:inline">Deployment: BMCH Barpeta</span>
+        <div className="flex items-center gap-3 text-slate-300 shrink-0">
+          <span>GeM: <strong className="text-white font-mono">{GEM_BID_NUMBER}</strong></span>
         </div>
       </div>
 
       {/* Main Navigation Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-8">
         {/* Brand Zone */}
-        <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-lg bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
             <img
               src={LUMINA_LOGO_FALLBACK}
               alt="Lumina Business Consulting Services Logo"
@@ -42,12 +41,12 @@ export const Header: React.FC<HeaderProps> = ({
               loading="eager"
             />
           </div>
-          <div>
-            <div className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-tight flex items-center gap-2">
-              <span>{AGENCY_NAME}</span>
+          <div className="min-w-0">
+            <div className="text-sm sm:text-lg font-bold text-slate-900 tracking-tight leading-tight truncate">
+              {AGENCY_NAME}
             </div>
-            <div className="text-xs text-slate-600 font-semibold">
-              Security Agency Interview Application Form · {INSTITUTION_NAME}
+            <div className="text-[11px] sm:text-xs text-slate-600 font-semibold truncate">
+              Security Agency Interview · {INSTITUTION_NAME}
             </div>
           </div>
         </div>

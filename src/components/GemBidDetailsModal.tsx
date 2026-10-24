@@ -16,15 +16,15 @@ export const GemBidDetailsModal: React.FC<GemBidDetailsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto no-print">
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto no-print">
+      <div className="relative w-full max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-0 sm:my-8 max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-slate-900 text-white p-5 flex items-start justify-between">
+        <div className="bg-slate-900 text-white p-4 sm:p-5 flex items-start justify-between">
           <div>
             <div className="text-xs uppercase tracking-wider text-amber-300 font-bold">
               Government e-Marketplace (GeM) Bid Notification
             </div>
-            <h2 className="text-lg font-bold text-white mt-1">
+            <h2 className="text-base sm:text-lg font-bold text-white mt-1">
               GeM Bid Number: {GEM_BID_NUMBER}
             </h2>
             <p className="text-xs text-slate-300 mt-0.5">
@@ -36,7 +36,7 @@ export const GemBidDetailsModal: React.FC<GemBidDetailsModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
@@ -157,10 +157,10 @@ export const GemBidDetailsModal: React.FC<GemBidDetailsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+            className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 rounded-xl cursor-pointer"
           >
             Close
           </button>
@@ -170,7 +170,7 @@ export const GemBidDetailsModal: React.FC<GemBidDetailsModalProps> = ({
               onClose();
               onApplyNow();
             }}
-            className="px-5 py-2.5 bg-sky-900 hover:bg-sky-800 text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+            className="w-full sm:w-auto min-h-[46px] px-5 py-2.5 bg-sky-900 hover:bg-sky-800 active:scale-[0.98] text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 touch-manipulation"
           >
             Proceed to Registration Form →
           </button>

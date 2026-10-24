@@ -67,37 +67,37 @@ export const SmsNotificationModal: React.FC<SmsNotificationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs no-print">
-      <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-xs no-print overflow-y-auto">
+      <div className="relative w-full max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[92vh] overflow-y-auto my-0 sm:my-6">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-5 py-4 flex items-center justify-between">
+        <div className="bg-slate-900 text-white px-4 sm:px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
               <MessageSquare className="w-4 h-4" />
             </div>
             <div>
-              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">
+              <div className="text-[11px] sm:text-xs uppercase tracking-wider text-slate-400 font-semibold">
                 Instant SMS Delivery Dispatch
               </div>
-              <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                <span>Sender: BMCH-GOV (Govt of Assam)</span>
+              <div className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                <span>Sender: BMCH-GOV (Assam)</span>
               </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1 rounded-md transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Smartphone Notification Preview */}
-        <div className="p-5 space-y-4">
+        <div className="p-4 sm:p-5 space-y-4">
           <div className="flex items-center justify-between text-xs text-slate-500 pb-2 border-b border-slate-100">
             <div className="flex items-center gap-1.5 font-medium">
-              <PhoneCall className="w-3.5 h-3.5 text-slate-400" />
-              <span>Delivered to: <strong className="text-slate-800">+91 {record.formData.contactNumber}</strong></span>
+              <PhoneCall className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>To: <strong className="text-slate-800">+91 {record.formData.contactNumber}</strong></span>
             </div>
             <span className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
               SENT & DELIVERED
@@ -105,10 +105,10 @@ export const SmsNotificationModal: React.FC<SmsNotificationModalProps> = ({
           </div>
 
           {/* SMS Message Bubble */}
-          <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-4 text-xs text-slate-800 leading-relaxed space-y-3 font-sans shadow-xs">
+          <div className="bg-sky-50/70 border border-sky-200 rounded-2xl p-3.5 sm:p-4 text-xs text-slate-800 leading-relaxed space-y-3 font-sans shadow-xs">
             <div className="flex items-center justify-between text-[11px] text-sky-900 font-bold border-b border-sky-200 pb-2">
               <div className="flex items-center gap-1.5">
-                <Bell className="w-3.5 h-3.5 text-sky-700" />
+                <Bell className="w-3.5 h-3.5 text-sky-700 shrink-0" />
                 <span>OFFICIAL SMS NOTIFICATION</span>
               </div>
               <span className="font-mono text-slate-500">
@@ -152,26 +152,26 @@ export const SmsNotificationModal: React.FC<SmsNotificationModalProps> = ({
 
           {resentNotification && (
             <div className="p-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-600" />
+              <Check className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>SMS re-dispatched successfully to +91 {record.formData.contactNumber}</span>
             </div>
           )}
 
           {/* Action Buttons */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-2.5 pt-1">
             <button
               type="button"
               onClick={handleCopy}
-              className="py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="min-h-[46px] py-2.5 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.98] touch-manipulation"
             >
               {copied ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-600" />
+                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Copied Text!</span>
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 text-slate-500" />
+                  <Copy className="w-4 h-4 text-slate-500 shrink-0" />
                   <span>Copy SMS Text</span>
                 </>
               )}
@@ -180,20 +180,20 @@ export const SmsNotificationModal: React.FC<SmsNotificationModalProps> = ({
             <button
               type="button"
               onClick={handleResend}
-              className="py-2.5 px-3 rounded-xl bg-sky-900 hover:bg-sky-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="min-h-[46px] py-2.5 px-3 rounded-xl bg-sky-900 hover:bg-sky-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.98] touch-manipulation"
             >
-              <Send className="w-4 h-4 text-amber-300" />
+              <Send className="w-4 h-4 text-amber-300 shrink-0" />
               <span>Resend SMS Alert</span>
             </button>
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="bg-slate-50 px-5 py-3 border-t border-slate-200 text-center">
+        <div className="bg-slate-50 px-4 sm:px-5 py-3 border-t border-slate-200 text-center">
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-bold text-sky-900 hover:underline cursor-pointer"
+            className="w-full min-h-[44px] flex items-center justify-center text-xs font-bold text-sky-900 hover:underline cursor-pointer"
           >
             Continue to View Official Payment Receipt →
           </button>

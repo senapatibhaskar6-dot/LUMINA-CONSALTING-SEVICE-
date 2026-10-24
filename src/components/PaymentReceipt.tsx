@@ -37,19 +37,19 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Action Bar (hidden in print) */}
-      <div className="no-print bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div className="no-print bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <button
           onClick={onNewRegistration}
-          className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center justify-center sm:justify-start gap-1.5 transition-colors cursor-pointer min-h-[44px] py-2 px-3 rounded-lg hover:bg-slate-50"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Register Another Candidate</span>
         </button>
 
-        <div className="flex items-center gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
           <button
             onClick={onOpenSms}
-            className="px-3.5 py-2 text-xs font-semibold text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-semibold text-sky-900 bg-sky-50 hover:bg-sky-100 active:bg-sky-200 border border-sky-200 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
           >
             <MessageSquare className="w-4 h-4 text-sky-700" />
             <span>View Sent SMS Alert</span>
@@ -57,7 +57,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
 
           <button
             onClick={handlePrint}
-            className="px-4 py-2 text-xs font-bold text-white bg-sky-900 hover:bg-sky-800 rounded-lg shadow-xs transition-colors flex items-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-bold text-white bg-sky-900 hover:bg-sky-800 active:scale-[0.98] rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
           >
             <Printer className="w-4 h-4" />
             <span>Print / Save as PDF</span>

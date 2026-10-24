@@ -32,6 +32,8 @@ import {
   CheckCircle2,
   AlertCircle,
   FileCheck,
+  FileText,
+  Search,
   ChevronRight,
   ExternalLink,
   Users,
@@ -40,66 +42,43 @@ import {
 
 const STORAGE_KEY = 'bmch_security_registrations_2026';
 
-// Seed initial sample record if none exists so users can explore immediately
-const INITIAL_SEED_RECORDS: ApplicationRecord[] = [
-  {
-    registrationId: 'BMCH-SEC-2026-08492',
-    createdAt: '2026-10-22T10:30:00.000Z',
-    formData: {
-      position: 'Security Supervisor',
-      fullName: 'BHASKAR JYOTI KALITA',
-      fatherName: 'Late Bipul Chandra Kalita',
-      dob: '1992-05-14',
-      gender: 'Male',
-      qualification: 'Graduate (BA / B.Sc / B.Com / BCA)',
-      villageTown: 'Barpeta Town, Ward No 4',
-      postOffice: 'Barpeta P.O.',
-      district: 'Barpeta',
-      pinCode: '781301',
-      contactNumber: '9864201934',
-      aadhaarNumber: '748291038491',
-      email: 'bhaskar.sec.bmch@gmail.com',
-      experienceYears: '4',
-      isExServicemen: 'No',
-      exServicemenDetails: '',
-      drivingLicenseNo: 'AS-15-20150029381',
-      drivingLicenseValidUpTo: '2029-08-20',
-      acceptedDeclaration: true,
-    },
-    payment: {
-      transactionId: 'CF98234KLA82',
-      orderId: 'ORD_BMCH_728194',
-      amount: 200,
-      currency: 'INR',
-      paymentMethod: 'UPI',
-      paymentGateway: 'Cashfree Payments',
-      status: 'SUCCESS',
-      paidAt: '2026-10-22T10:31:45.000Z',
-      bankRefNo: 'UTR492810394812',
-      upiIdOrCardLast4: '9864201934@upi',
-    },
-    smsSent: true,
-    smsTimestamp: '2026-10-22T10:31:48.000Z',
-  },
-];
-
 export default function App() {
   const [activeTab, setActiveTab] = useState<'register' | 'receipt' | 'bidInfo'>('register');
   const [allRecords, setAllRecords] = useState<ApplicationRecord[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          // Remove any legacy demo seed data
+          return parsed.filter(
+            (r: ApplicationRecord) => r.registrationId !== 'BMCH-SEC-2026-08492'
+          );
+        }
       }
     } catch {
       // ignore
     }
-    return INITIAL_SEED_RECORDS;
+    return [];
   });
 
-  const [currentRecord, setCurrentRecord] = useState<ApplicationRecord | null>(
-    INITIAL_SEED_RECORDS[0] || null
-  );
+  const [currentRecord, setCurrentRecord] = useState<ApplicationRecord | null>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const liveRecords = parsed.filter(
+            (r: ApplicationRecord) => r.registrationId !== 'BMCH-SEC-2026-08492'
+          );
+          return liveRecords[0] || null;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  });
   const [pendingFormData, setPendingFormData] = useState<RegistrationFormData | null>(null);
 
   // Modals state
@@ -184,11 +163,11 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-24 sm:pb-8">
         {activeTab === 'register' && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Hero Banner */}
-            <div className="relative rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-slate-900 text-white">
+            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg border border-slate-200 bg-slate-900 text-white">
               {/* Subtle background */}
               <div className="absolute inset-0">
                 <img
@@ -200,10 +179,10 @@ export default function App() {
               </div>
 
               {/* Banner Content */}
-              <div className="relative z-10 p-6 sm:p-8 space-y-4">
+              <div className="relative z-10 p-4 sm:p-8 space-y-4">
                 {/* Logo & Agency Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-3 border-b border-white/10">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-xl p-1.5 shadow-md flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 pb-3 border-b border-white/10">
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white rounded-xl p-1 shadow-md flex items-center justify-center shrink-0">
                     <img
                       src={LUMINA_LOGO_FALLBACK}
                       alt="Lumina Business Consulting Services"
@@ -211,16 +190,16 @@ export default function App() {
                       loading="eager"
                     />
                   </div>
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold mb-1">
-                      <span className="bg-amber-400 text-slate-950 font-bold px-2.5 py-0.5 rounded tracking-wide">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold mb-1">
+                      <span className="bg-amber-400 text-slate-950 font-bold px-2 py-0.5 rounded text-[11px] sm:text-xs tracking-wide truncate max-w-[200px] sm:max-w-none">
                         {AGENCY_NAME}
                       </span>
-                      <span className="bg-sky-500/20 text-sky-200 border border-sky-400/30 px-2.5 py-0.5 rounded">
-                        GeM Bid: {GEM_BID_NUMBER}
+                      <span className="bg-sky-500/20 text-sky-200 border border-sky-400/30 px-2 py-0.5 rounded text-[10px] sm:text-xs">
+                        Bid: {GEM_BID_NUMBER}
                       </span>
                     </div>
-                    <div className="text-xs text-slate-300 font-medium">
+                    <div className="text-[11px] sm:text-xs text-slate-300 font-medium truncate">
                       {AGENCY_ADDRESS}
                     </div>
                   </div>
@@ -228,7 +207,7 @@ export default function App() {
 
                 {/* Primary Heading */}
                 <div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                  <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
                     Security Agency Interview Application Form
                   </h1>
                   <div className="text-xs sm:text-sm font-semibold text-amber-300 mt-1">
@@ -237,26 +216,26 @@ export default function App() {
                 </div>
 
                 {/* Key Remuneration & Fee Strip */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                  <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-1">
+                  <div className="bg-white/10 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-white/10">
                     <div className="text-xs text-sky-200 font-semibold">Security Supervisor</div>
-                    <div className="text-lg font-bold text-white font-mono flex items-center gap-1">
-                      <IndianRupee className="w-4 h-4" /> 26,178 / Month
+                    <div className="text-base sm:text-lg font-bold text-white font-mono flex items-center gap-1">
+                      <IndianRupee className="w-4 h-4 shrink-0" /> 26,178 / Month
                     </div>
                     <div className="text-[11px] text-slate-300">Driving License Required</div>
                   </div>
 
-                  <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+                  <div className="bg-white/10 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-white/10">
                     <div className="text-xs text-emerald-200 font-semibold">Unarmed Security Guard</div>
-                    <div className="text-lg font-bold text-white font-mono flex items-center gap-1">
-                      <IndianRupee className="w-4 h-4" /> 17,756 / Month
+                    <div className="text-base sm:text-lg font-bold text-white font-mono flex items-center gap-1">
+                      <IndianRupee className="w-4 h-4 shrink-0" /> 17,756 / Month
                     </div>
                     <div className="text-[11px] text-slate-300">10th Pass / Fitness Standard</div>
                   </div>
 
-                  <div className="bg-amber-500/20 backdrop-blur-xs p-3.5 rounded-xl border border-amber-400/30">
+                  <div className="bg-amber-500/20 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-amber-400/30">
                     <div className="text-xs text-amber-200 font-semibold">Application Form Fee</div>
-                    <div className="text-lg font-bold text-amber-300 font-mono">
+                    <div className="text-base sm:text-lg font-bold text-amber-300 font-mono">
                       Rs. {APPLICATION_FEE}.00
                     </div>
                     <div className="text-[11px] text-amber-200/80">Non-refundable / Online Gateway</div>
@@ -264,9 +243,9 @@ export default function App() {
                 </div>
 
                 {/* Interview Notice */}
-                <div className="bg-amber-400/15 border border-amber-400/40 p-3.5 rounded-xl flex items-center gap-3 text-xs text-amber-100 font-medium">
-                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span>
+                <div className="bg-amber-400/15 border border-amber-400/40 p-3 sm:p-3.5 rounded-xl flex items-start sm:items-center gap-2.5 text-xs text-amber-100 font-medium">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
+                  <span className="leading-relaxed">
                     <strong>Notice:</strong> This form is strictly for the Security Agency Interview. Interview date and details will be communicated soon to your provided phone number.
                   </span>
                 </div>
@@ -278,17 +257,50 @@ export default function App() {
           </div>
         )}
 
-        {activeTab === 'receipt' && currentRecord && (
-          <PaymentReceipt
-            record={currentRecord}
-            onOpenSms={() => setIsSmsModalOpen(true)}
-            onNewRegistration={() => setActiveTab('register')}
-          />
+        {activeTab === 'receipt' && (
+          currentRecord ? (
+            <PaymentReceipt
+              record={currentRecord}
+              onOpenSms={() => setIsSmsModalOpen(true)}
+              onNewRegistration={() => setActiveTab('register')}
+            />
+          ) : (
+            <div className="bg-white rounded-2xl p-6 sm:p-12 border border-slate-200 text-center max-w-xl mx-auto shadow-xs space-y-4">
+              <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center mx-auto text-sky-900 border border-sky-100">
+                <FileCheck className="w-7 h-7" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+                  Application & Payment Receipt Portal
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                  No active receipt loaded. If you have already applied and paid the Rs. 200 fee, search using your mobile number or registration ID.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsLookupModalOpen(true)}
+                  className="w-full sm:w-auto px-5 py-3 min-h-[46px] bg-sky-900 hover:bg-sky-800 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 shadow-xs cursor-pointer"
+                >
+                  <Search className="w-4 h-4" />
+                  <span>Find My Receipt / Status</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('register')}
+                  className="w-full sm:w-auto px-5 py-3 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <span>Fill New Application</span>
+                </button>
+              </div>
+            </div>
+          )
         )}
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 text-xs text-slate-500 no-print mt-12">
+      <footer className="bg-white border-t border-slate-200 py-6 text-xs text-slate-500 no-print mt-12 mb-14 md:mb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left space-y-1">
             <div className="font-bold text-slate-900 text-sm">
@@ -319,6 +331,57 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Fixed Bottom Navigation Bar (thumb-zone ergonomics) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 shadow-lg no-print">
+        <div className="grid grid-cols-4 items-center h-14">
+          <button
+            type="button"
+            onClick={() => setActiveTab('register')}
+            className={`flex flex-col items-center justify-center h-full min-h-[44px] cursor-pointer touch-manipulation transition-colors ${
+              activeTab === 'register' ? 'text-sky-900 font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FileText className={`w-5 h-5 ${activeTab === 'register' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">Apply</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (currentRecord) {
+                setActiveTab('receipt');
+              } else {
+                setIsLookupModalOpen(true);
+              }
+            }}
+            className={`flex flex-col items-center justify-center h-full min-h-[44px] cursor-pointer touch-manipulation transition-colors ${
+              activeTab === 'receipt' ? 'text-sky-900 font-bold' : 'text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <FileCheck className={`w-5 h-5 ${activeTab === 'receipt' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">Receipt</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsBidDetailsOpen(true)}
+            className="flex flex-col items-center justify-center h-full min-h-[44px] text-slate-500 hover:text-slate-800 cursor-pointer touch-manipulation transition-colors"
+          >
+            <Shield className="w-5 h-5 stroke-2" />
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">GeM Bid</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsLookupModalOpen(true)}
+            className="flex flex-col items-center justify-center h-full min-h-[44px] text-slate-500 hover:text-slate-800 cursor-pointer touch-manipulation transition-colors"
+          >
+            <Search className="w-5 h-5 stroke-2" />
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">Search</span>
+          </button>
+        </div>
+      </nav>
 
       {/* Cashfree Payment Gateway Checkout Modal */}
       {pendingFormData && (

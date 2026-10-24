@@ -29,11 +29,11 @@ export const PositionSalarySelector: React.FC<PositionSalarySelectorProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
         {/* Security Supervisor Card */}
         <div
           onClick={() => onChangePosition('Security Supervisor')}
-          className={`relative p-5 rounded-xl border-2 transition-all cursor-pointer bg-white ${
+          className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all cursor-pointer bg-white active:scale-[0.99] touch-manipulation select-none ${
             selectedPosition === 'Security Supervisor'
               ? 'border-sky-800 ring-2 ring-sky-800/10 shadow-sm'
               : 'border-slate-200 hover:border-slate-300'
@@ -101,7 +101,7 @@ export const PositionSalarySelector: React.FC<PositionSalarySelectorProps> = ({
         {/* Unarmed Security Guard Card */}
         <div
           onClick={() => onChangePosition('Unarmed Security Guard')}
-          className={`relative p-5 rounded-xl border-2 transition-all cursor-pointer bg-white ${
+          className={`relative p-4 sm:p-5 rounded-xl border-2 transition-all cursor-pointer bg-white active:scale-[0.99] touch-manipulation select-none ${
             selectedPosition === 'Unarmed Security Guard'
               ? 'border-sky-800 ring-2 ring-sky-800/10 shadow-sm'
               : 'border-slate-200 hover:border-slate-300'

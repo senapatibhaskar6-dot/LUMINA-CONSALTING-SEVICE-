@@ -94,10 +94,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-xs overflow-y-auto no-print">
-      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-8">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/70 backdrop-blur-xs overflow-y-auto no-print">
+      <div className="relative w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-0 sm:my-8 max-h-[92vh] overflow-y-auto">
         {/* Cashfree Gateway Header */}
-        <div className="bg-linear-to-r from-sky-950 via-sky-900 to-indigo-950 text-white p-5">
+        <div className="bg-linear-to-r from-sky-950 via-sky-900 to-indigo-950 text-white p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="bg-amber-400 text-sky-950 text-[10px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
@@ -108,22 +108,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <button
               onClick={onClose}
               disabled={isProcessing}
-              className="text-slate-300 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              className="text-slate-300 hover:text-white p-1 rounded-lg transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="mt-4 flex items-baseline justify-between border-t border-sky-800/80 pt-3">
+          <div className="mt-3 sm:mt-4 flex items-baseline justify-between border-t border-sky-800/80 pt-3">
             <div>
               <div className="text-xs text-sky-200">Merchant Account (Service Provider)</div>
-              <div className="text-sm font-semibold truncate max-w-[240px]">
+              <div className="text-sm font-semibold truncate max-w-[220px] sm:max-w-[260px]">
                 {AGENCY_NAME}
               </div>
               <div className="text-[10px] text-sky-300">{AGENCY_ADDRESS}</div>
               <div className="text-[10px] text-amber-300 mt-0.5">Deployment: {INSTITUTION_NAME} (GeM: {GEM_BID_NUMBER})</div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <div className="text-xs text-sky-200">Total Form Fee</div>
               <div className="text-2xl font-extrabold text-white font-mono">
                 ₹{APPLICATION_FEE}.00
@@ -133,17 +133,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         </div>
 
         {/* Applicant Summary Strip */}
-        <div className="bg-slate-50 px-5 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
-          <div>
+        <div className="bg-slate-50 px-4 sm:px-5 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <div className="truncate mr-2">
             Candidate: <strong className="text-slate-900">{formData.fullName}</strong>
           </div>
-          <div className="text-slate-500 font-mono">
+          <div className="text-slate-500 font-mono shrink-0">
             +91 {formData.contactNumber}
           </div>
         </div>
 
         {/* Body Content */}
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {simulatedError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
@@ -171,7 +171,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMethod('UPI')}
-                  className={`p-2.5 text-xs font-semibold rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                  className={`p-2.5 min-h-[46px] text-xs font-semibold rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-[0.98] ${
                     activeMethod === 'UPI'
                       ? 'border-sky-800 bg-sky-50/70 text-sky-950 font-bold'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -184,7 +184,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMethod('Card')}
-                  className={`p-2.5 text-xs font-semibold rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                  className={`p-2.5 min-h-[46px] text-xs font-semibold rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-[0.98] ${
                     activeMethod === 'Card'
                       ? 'border-sky-800 bg-sky-50/70 text-sky-950 font-bold'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -197,7 +197,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveMethod('NetBanking')}
-                  className={`p-2.5 text-xs font-semibold rounded-lg border text-center transition-all cursor-pointer flex flex-col items-center gap-1.5 ${
+                  className={`p-2.5 min-h-[46px] text-xs font-semibold rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-[0.98] ${
                     activeMethod === 'NetBanking'
                       ? 'border-sky-800 bg-sky-50/70 text-sky-950 font-bold'
                       : 'border-slate-200 hover:bg-slate-50 text-slate-600'
@@ -212,8 +212,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               {activeMethod === 'UPI' && (
                 <div className="space-y-4">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <QrCode className="w-10 h-10 text-slate-800 bg-white p-1 rounded border border-slate-200" />
+                    <div className="flex items-center gap-2.5">
+                      <QrCode className="w-10 h-10 text-slate-800 bg-white p-1 rounded-lg border border-slate-200" />
                       <div>
                         <div className="text-xs font-bold text-slate-900">
                           Scan & Pay via any UPI App
@@ -237,7 +237,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       placeholder={`${formData.contactNumber}@upi`}
-                      className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg outline-none focus:border-sky-800"
+                      className="w-full px-3.5 py-3 min-h-[46px] text-base sm:text-sm border border-slate-300 rounded-xl outline-none focus:border-sky-800"
                     />
                     <p className="text-[11px] text-slate-400 mt-1">
                       Example: mobile@oksbi, yourname@okaxis, or upi@paytm
@@ -255,11 +255,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </label>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
                       placeholder="4242 ···· ···· 4242"
                       maxLength={19}
-                      className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg outline-none focus:border-sky-800"
+                      className="w-full px-3.5 py-3 min-h-[46px] text-base sm:text-sm font-mono border border-slate-300 rounded-xl outline-none focus:border-sky-800"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -269,11 +270,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </label>
                       <input
                         type="text"
+                        inputMode="numeric"
                         value={cardExpiry}
                         onChange={(e) => setCardExpiry(e.target.value)}
                         placeholder="MM/YY (e.g. 08/28)"
                         maxLength={5}
-                        className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg outline-none focus:border-sky-800"
+                        className="w-full px-3.5 py-3 min-h-[46px] text-base sm:text-sm font-mono border border-slate-300 rounded-xl outline-none focus:border-sky-800"
                       />
                     </div>
                     <div>
@@ -282,11 +284,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </label>
                       <input
                         type="password"
+                        inputMode="numeric"
                         value={cardCvv}
                         onChange={(e) => setCardCvv(e.target.value)}
                         placeholder="•••"
                         maxLength={4}
-                        className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-lg outline-none focus:border-sky-800"
+                        className="w-full px-3.5 py-3 min-h-[46px] text-base sm:text-sm font-mono border border-slate-300 rounded-xl outline-none focus:border-sky-800"
                       />
                     </div>
                   </div>
@@ -305,7 +308,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <select
                     value={selectedBank}
                     onChange={(e) => setSelectedBank(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-sky-800 bg-white"
+                    className="w-full px-3.5 py-3 min-h-[46px] text-base sm:text-sm border border-slate-300 rounded-xl outline-none focus:border-sky-800 bg-white"
                   >
                     <option value="State Bank of India">State Bank of India (SBI)</option>
                     <option value="Assam Gramin Vikash Bank">Assam Gramin Vikash Bank (AGVB)</option>
@@ -324,37 +327,25 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               )}
 
               {/* Main Payment CTA */}
-              <div className="mt-6 space-y-2">
+              <div className="mt-5">
                 <button
                   type="button"
                   onClick={() => handleSimulatePayment(false)}
-                  className="w-full py-3.5 px-4 bg-sky-900 hover:bg-sky-800 text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full min-h-[50px] py-3.5 px-4 bg-sky-900 hover:bg-sky-800 active:scale-[0.98] text-white font-bold rounded-xl text-base transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                 >
-                  <Lock className="w-4 h-4 text-emerald-400" />
+                  <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span>Pay ₹{APPLICATION_FEE}.00 via Cashfree</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
-
-                {/* Secondary Test Buttons for Reviewer */}
-                <div className="pt-2 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Gateway Sandbox Mode:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSimulatePayment(true)}
-                    className="text-red-600 hover:underline cursor-pointer"
-                  >
-                    Test Failure Scenario
-                  </button>
-                </div>
               </div>
             </>
           )}
         </div>
 
         {/* Footer Security Badges */}
-        <div className="bg-slate-100 px-5 py-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="bg-slate-100 px-4 sm:px-5 py-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
           <div className="flex items-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-sky-800" />
+            <ShieldCheck className="w-4 h-4 text-sky-800 shrink-0" />
             <span>Cashfree Payments Secured</span>
           </div>
           <div className="flex items-center gap-2">
