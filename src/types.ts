@@ -48,6 +48,7 @@ export interface PaymentDetails {
 
 export interface ApplicationRecord {
   registrationId: string;
+  receiptNumber: string;
   createdAt: string;
   formData: RegistrationFormData;
   payment: PaymentDetails;

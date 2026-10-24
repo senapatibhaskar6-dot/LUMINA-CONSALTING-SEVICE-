@@ -50,9 +50,8 @@ export const SmsNotificationModal: React.FC<SmsNotificationModalProps> = ({
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
-  const smsText = `[LUMINA-BMCH]: Dear ${record.formData.fullName}, your registration & payment of Rs. 200.00 for ${record.formData.position} at Barpeta Medical College and Hospital (GeM Bid: GEM/2026/B/8101646) is SUCCESSFUL.\n\nRegistration No: ${record.registrationId}\nTransaction ID: ${record.payment.transactionId}\nAgency: Lumina Consulting Service, Bharalu, Guwahati-781009, Kamrup(M) Assam\n\n1. Interview date and details will be communicated soon to your provided phone number.\n2. Please bring this payment receipt along with you on the day of the interview.\n\n- Lumina Consulting Service / BMCH Barpeta, Assam.`;
+  const receiptNo = record.receiptNumber || `BMCH-REC-2026-${record.registrationId.replace(/[^0-9]/g, '').slice(-5) || '10294'}`;
+  const smsText = `[LUMINA-BMCH]: Dear ${record.formData.fullName}, your registration & payment of Rs. 200.00 for ${record.formData.position} at Barpeta Medical College and Hospital (GeM Bid: GEM/2026/B/8101646) is SUCCESSFUL.\n\nReceipt No: ${receiptNo}\nRegistration No: ${record.registrationId}\nTransaction ID: ${record.payment.transactionId}\nAgency: Lumina Consulting Service, Bharalu, Guwahati-781009, Kamrup(M) Assam\n\n1. Interview date and details will be communicated soon to your provided phone number.\n2. Please bring this payment receipt along with you on the day of the interview.\n\n- Lumina Consulting Service / BMCH Barpeta, Assam.`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(smsText);

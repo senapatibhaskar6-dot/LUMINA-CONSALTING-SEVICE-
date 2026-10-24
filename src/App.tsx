@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { RegistrationFormData, PaymentDetails, ApplicationRecord, SecurityPosition } from './types';
+import { RegistrationFormData, PaymentDetails, ApplicationRecord } from './types';
 import { Header } from './components/Header';
 import { RegistrationForm } from './components/RegistrationForm';
 import { PaymentModal } from './components/PaymentModal';
@@ -13,6 +13,7 @@ import { PaymentReceipt } from './components/PaymentReceipt';
 import { SmsNotificationModal } from './components/SmsNotificationModal';
 import { LookupModal } from './components/LookupModal';
 import { GemBidDetailsModal } from './components/GemBidDetailsModal';
+import { SubmissionTrackerModal } from './components/SubmissionTrackerModal';
 import {
   GEM_BID_NUMBER,
   INSTITUTION_NAME,
@@ -37,7 +38,8 @@ import {
   ChevronRight,
   ExternalLink,
   Users,
-  Clock
+  Clock,
+  BarChart3
 } from 'lucide-react';
 
 const STORAGE_KEY = 'bmch_security_registrations_2026';
@@ -86,6 +88,7 @@ export default function App() {
   const [isSmsModalOpen, setIsSmsModalOpen] = useState(false);
   const [isLookupModalOpen, setIsLookupModalOpen] = useState(false);
   const [isBidDetailsOpen, setIsBidDetailsOpen] = useState(false);
+  const [isTrackerOpen, setIsTrackerOpen] = useState(false);
 
   // Sync to local storage
   useEffect(() => {
@@ -106,12 +109,14 @@ export default function App() {
   const handlePaymentSuccess = (payment: PaymentDetails) => {
     if (!pendingFormData) return;
 
-    // Generate unique registration ID
+    // Generate unique registration ID and Official Receipt Number
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
     const newRegId = `BMCH-SEC-2026-${randomSuffix}`;
+    const newReceiptNo = `BMCH-REC-2026-${randomSuffix}`;
 
     const newRecord: ApplicationRecord = {
       registrationId: newRegId,
+      receiptNumber: newReceiptNo,
       createdAt: new Date().toISOString(),
       formData: pendingFormData,
       payment,
@@ -160,6 +165,8 @@ export default function App() {
         }}
         hasActiveReceipt={!!currentRecord}
         onOpenLookup={() => setIsLookupModalOpen(true)}
+        submissionsCount={allRecords.length}
+        onOpenTracker={() => setIsTrackerOpen(true)}
       />
 
       {/* Main Content Area */}
@@ -175,7 +182,7 @@ export default function App() {
                   alt="Lumina Business Consulting Services"
                   className="w-full h-full object-cover opacity-10 filter blur-xs"
                 />
-                <div className="absolute inset-0 bg-linear-to-r from-slate-950 via-slate-900/95 to-slate-950/90" />
+                <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/95 to-slate-950/90" />
               </div>
 
               {/* Banner Content */}
@@ -215,6 +222,26 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* Live Track Record Bar (User Request) */}
+                <div className="flex flex-wrap items-center justify-between gap-2.5 bg-white/10 backdrop-blur-xs px-3.5 py-2.5 rounded-xl border border-white/15">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span className="text-slate-200">মুঠ জমা হোৱা আবেদন (Total Registered):</span>
+                    <strong className="text-amber-300 font-mono text-sm sm:text-base font-extrabold">
+                      {allRecords.length}
+                    </strong>
+                    <span className="text-slate-300">জন প্ৰাৰ্থী</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsTrackerOpen(true)}
+                    className="text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs"
+                  >
+                    <BarChart3 className="w-3.5 h-3.5 text-slate-950" />
+                    <span>Track Record Switch (ট্ৰেক ৰেকৰ্ড)</span>
+                  </button>
+                </div>
+
                 {/* Key Remuneration & Fee Strip */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-1">
                   <div className="bg-white/10 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-white/10">
@@ -238,7 +265,7 @@ export default function App() {
                     <div className="text-base sm:text-lg font-bold text-amber-300 font-mono">
                       Rs. {APPLICATION_FEE}.00
                     </div>
-                    <div className="text-[11px] text-amber-200/80">Non-refundable / Online Gateway</div>
+                    <div className="text-[11px] text-amber-200/80">Cashfree Live Gateway / Immediate Receipt</div>
                   </div>
                 </div>
 
@@ -246,7 +273,7 @@ export default function App() {
                 <div className="bg-amber-400/15 border border-amber-400/40 p-3 sm:p-3.5 rounded-xl flex items-start sm:items-center gap-2.5 text-xs text-amber-100 font-medium">
                   <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
                   <span className="leading-relaxed">
-                    <strong>Notice:</strong> This form is strictly for the Security Agency Interview. Interview date and details will be communicated soon to your provided phone number.
+                    <strong>Notice:</strong> This form is strictly for the Security Agency Interview. Interview date and details will be communicated soon to your provided phone number. Please retain your Official Receipt Number.
                   </span>
                 </div>
               </div>
@@ -274,7 +301,7 @@ export default function App() {
                   Application & Payment Receipt Portal
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
-                  No active receipt loaded. If you have already applied and paid the Rs. 200 fee, search using your mobile number or registration ID.
+                  No active receipt loaded. If you have already applied and paid the Rs. 200 fee, search using your mobile number or receipt number.
                 </p>
               </div>
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -288,10 +315,11 @@ export default function App() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('register')}
-                  className="w-full sm:w-auto px-5 py-3 min-h-[46px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  onClick={() => setIsTrackerOpen(true)}
+                  className="w-full sm:w-auto px-5 py-3 min-h-[46px] bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <span>Fill New Application</span>
+                  <BarChart3 className="w-4 h-4" />
+                  <span>View Track Record</span>
                 </button>
               </div>
             </div>
@@ -316,6 +344,13 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setIsTrackerOpen(true)}
+              className="text-sky-900 hover:underline font-semibold cursor-pointer"
+            >
+              Track Record ({allRecords.length})
+            </button>
+            <span>·</span>
+            <button
               onClick={() => setIsBidDetailsOpen(true)}
               className="text-sky-900 hover:underline font-medium cursor-pointer"
             >
@@ -332,7 +367,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Mobile Fixed Bottom Navigation Bar (thumb-zone ergonomics) */}
+      {/* Mobile Fixed Bottom Navigation Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-1 shadow-lg no-print">
         <div className="grid grid-cols-4 items-center h-14">
           <button
@@ -365,11 +400,16 @@ export default function App() {
 
           <button
             type="button"
-            onClick={() => setIsBidDetailsOpen(true)}
-            className="flex flex-col items-center justify-center h-full min-h-[44px] text-slate-500 hover:text-slate-800 cursor-pointer touch-manipulation transition-colors"
+            onClick={() => setIsTrackerOpen(true)}
+            className="flex flex-col items-center justify-center h-full min-h-[44px] text-amber-600 hover:text-amber-800 cursor-pointer touch-manipulation transition-colors font-bold"
           >
-            <Shield className="w-5 h-5 stroke-2" />
-            <span className="text-[10px] font-medium tracking-tight mt-0.5">GeM Bid</span>
+            <div className="relative">
+              <BarChart3 className="w-5 h-5 stroke-2" />
+              <span className="absolute -top-1.5 -right-2 bg-slate-900 text-amber-300 text-[9px] font-mono px-1 rounded-full">
+                {allRecords.length}
+              </span>
+            </div>
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">Tracker</span>
           </button>
 
           <button
@@ -409,6 +449,14 @@ export default function App() {
       <LookupModal
         isOpen={isLookupModalOpen}
         onClose={() => setIsLookupModalOpen(false)}
+        allRecords={allRecords}
+        onSelectRecord={handleSelectRecordFromLookup}
+      />
+
+      {/* Submission Track Record Modal */}
+      <SubmissionTrackerModal
+        isOpen={isTrackerOpen}
+        onClose={() => setIsTrackerOpen(false)}
         allRecords={allRecords}
         onSelectRecord={handleSelectRecordFromLookup}
       />

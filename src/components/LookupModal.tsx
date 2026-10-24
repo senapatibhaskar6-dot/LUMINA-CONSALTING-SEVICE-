@@ -24,6 +24,7 @@ export const LookupModal: React.FC<LookupModalProps> = ({
     const term = searchTerm.trim().toLowerCase();
     if (!term) return true;
     return (
+      (rec.receiptNumber && rec.receiptNumber.toLowerCase().includes(term)) ||
       rec.registrationId.toLowerCase().includes(term) ||
       rec.formData.contactNumber.includes(term) ||
       rec.formData.aadhaarNumber.includes(term) ||

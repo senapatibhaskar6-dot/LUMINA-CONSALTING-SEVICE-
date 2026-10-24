@@ -13,7 +13,8 @@ import {
   MessageSquare,
   ArrowLeft,
   FileCheck2,
-  IndianRupee
+  IndianRupee,
+  Hash
 } from 'lucide-react';
 
 interface PaymentReceiptProps {
@@ -28,6 +29,8 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
   onNewRegistration,
 }) => {
   const { formData, payment, registrationId, createdAt } = record;
+  // Official Receipt Number formatting
+  const receiptNo = record.receiptNumber || `BMCH-REC-2026-${registrationId.replace(/[^0-9]/g, '').slice(-5) || '10294'}`;
   const salaryInfo = SALARY_MATRIX[formData.position];
 
   const handlePrint = () => {
@@ -73,7 +76,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
             Payment of Rs. 200.00 Received Successfully via Cashfree Payments
           </p>
           <p className="text-emerald-700">
-            Registration has been recorded in the BMCH recruitment roster. A confirmation SMS has been automatically dispatched to <strong>+91 {formData.contactNumber}</strong>.
+            Official Receipt Number: <strong className="font-mono text-emerald-950">{receiptNo}</strong>. Registration has been recorded in the BMCH recruitment roster. A confirmation SMS has been dispatched to <strong>+91 {formData.contactNumber}</strong>.
           </p>
         </div>
       </div>
@@ -109,21 +112,46 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
             </div>
 
             <div className="pt-1 text-sm font-bold uppercase tracking-widest text-sky-950 border-t border-slate-200 mt-3 inline-block px-4">
-              Security Agency Interview Registration & Payment Receipt (2026)
+              Security Agency Interview Registration & Official Money Receipt (2026)
+            </div>
+
+            {/* PROMINENT OFFICIAL RECEIPT NUMBER STAMP */}
+            <div className="mt-3 max-w-xl mx-auto bg-gradient-to-r from-amber-50 via-amber-100 to-amber-50 border-2 border-amber-500 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-2xs">
+              <div>
+                <div className="text-[11px] font-extrabold uppercase tracking-wider text-amber-950 flex items-center justify-center sm:justify-start gap-1">
+                  <Hash className="w-3.5 h-3.5 text-amber-800" />
+                  <span>Official Receipt Number / ৰচিদ নম্বৰ:</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-black font-mono text-sky-950 tracking-wider">
+                  {receiptNo}
+                </div>
+              </div>
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="px-3 py-1.5 bg-emerald-700 text-white font-black rounded-lg text-xs shadow-xs flex items-center gap-1.5 uppercase tracking-wide">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                  <span>FEE ₹200.00 PAID</span>
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Registration Key Numbers Strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
-            <div>
-              <span className="text-slate-500 block">Registration Number:</span>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            <div className="bg-white p-2 rounded-lg border border-slate-200">
+              <span className="text-slate-500 block text-[11px]">Official Receipt No:</span>
               <span className="font-mono font-bold text-sm text-sky-950">
+                {receiptNo}
+              </span>
+            </div>
+            <div className="bg-white p-2 rounded-lg border border-slate-200">
+              <span className="text-slate-500 block text-[11px]">Registration Number:</span>
+              <span className="font-mono font-bold text-sm text-slate-800">
                 {registrationId}
               </span>
             </div>
-            <div>
-              <span className="text-slate-500 block">Date & Time of Submission:</span>
-              <span className="font-medium text-slate-800">
+            <div className="bg-white p-2 rounded-lg border border-slate-200">
+              <span className="text-slate-500 block text-[11px]">Date & Time:</span>
+              <span className="font-medium text-slate-800 text-[11px]">
                 {new Date(createdAt).toLocaleString('en-IN', {
                   day: '2-digit',
                   month: 'short',
@@ -135,15 +163,15 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
                 })}
               </span>
             </div>
-            <div>
-              <span className="text-slate-500 block">Cashfree Transaction ID:</span>
-              <span className="font-mono font-bold text-slate-800">
+            <div className="bg-white p-2 rounded-lg border border-slate-200">
+              <span className="text-slate-500 block text-[11px]">Cashfree Txn ID:</span>
+              <span className="font-mono font-semibold text-slate-800 truncate block">
                 {payment.transactionId}
               </span>
             </div>
           </div>
 
-          {/* CRITICAL MANDATORY INTERVIEW NOTICES (Highlighted in Receipt Layout) */}
+          {/* CRITICAL MANDATORY INTERVIEW NOTICES */}
           <div className="bg-amber-50/90 border-2 border-amber-400 rounded-xl p-4 sm:p-5 space-y-2.5">
             <div className="flex items-center gap-2 text-amber-950 font-bold text-xs uppercase tracking-wider">
               <AlertTriangle className="w-4 h-4 text-amber-700" />
@@ -159,7 +187,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
               <div className="flex items-start gap-2 bg-white/80 p-2.5 rounded-lg border border-amber-200">
                 <CheckCircle2 className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <span>
-                  Please bring this payment receipt along with you on the day of the interview.
+                  Please bring this payment receipt (Receipt No: <strong>{receiptNo}</strong>) along with you on the day of the interview.
                 </span>
               </div>
             </div>
@@ -303,9 +331,9 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
                 <span className="text-[10px] text-slate-500 block">(Non-Refundable)</span>
               </div>
               <div>
-                <span className="text-slate-500 block">Payment Mode:</span>
-                <span className="font-semibold text-slate-800">
-                  {payment.paymentMethod} {payment.upiIdOrCardLast4 ? `(${payment.upiIdOrCardLast4})` : ''}
+                <span className="text-slate-500 block">Official Receipt No:</span>
+                <span className="font-mono font-bold text-sky-950">
+                  {receiptNo}
                 </span>
               </div>
               <div>
@@ -333,7 +361,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
               <div className="space-y-0.5">
                 <div className="font-bold text-slate-900">Digital Authenticity QR</div>
                 <div className="text-[11px] text-slate-500">Scan at interview gate for verification</div>
-                <div className="font-mono text-[10px] text-slate-400">BMCH/VERIFY/{registrationId}</div>
+                <div className="font-mono text-[10px] text-slate-400">BMCH/REC/{receiptNo}/PAID</div>
               </div>
             </div>
 
@@ -356,7 +384,7 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
 
           {/* Footer Notice */}
           <div className="pt-2 text-center text-[10px] text-slate-400 border-t border-slate-200">
-            Note: This is an official system-generated registration receipt issued by {AGENCY_NAME} under GeM Bid {GEM_BID_NUMBER} for deployment at {INSTITUTION_NAME}. Please preserve this receipt carefully. You must produce this receipt and original Aadhaar / Driving License at the time of interview.
+            Note: This is an official system-generated registration receipt (Receipt No: {receiptNo}) issued by {AGENCY_NAME} under GeM Bid {GEM_BID_NUMBER} for deployment at {INSTITUTION_NAME}. Please preserve this receipt carefully. You must produce this receipt and original Aadhaar / Driving License at the time of interview.
           </div>
         </div>
       </div>
