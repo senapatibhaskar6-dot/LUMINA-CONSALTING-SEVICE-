@@ -80,30 +80,10 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
 
       {/* THE OFFICIAL PRINTABLE RECEIPT */}
       <div className="receipt-container relative bg-white border border-slate-300 rounded-2xl shadow-md p-6 sm:p-10 text-slate-900 overflow-hidden font-sans">
-        {/* Subtle Watermark in background */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] z-0 select-none">
-          <img
-            src="/src/assets/images/lumina_logo.jpeg"
-            alt="Lumina Watermark"
-            className="w-96 h-96 object-contain"
-          />
-        </div>
-
-        {/* Content Container on top of watermark */}
+        {/* Content Container */}
         <div className="relative z-10 space-y-6">
           {/* Top Agency Header */}
-          <div className="text-center border-b-2 border-slate-800 pb-5 space-y-3">
-            {/* Lumina Agency Official Logo Centered */}
-            <div className="flex justify-center mb-1">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-center">
-                <img
-                  src="/src/assets/images/lumina_logo.jpeg"
-                  alt="Lumina Business Consulting Services Logo"
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            </div>
-
+          <div className="text-center border-b-2 border-slate-800 pb-5 space-y-2">
             <div>
               <h1 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-slate-950">
                 {AGENCY_NAME}
