@@ -1,0 +1,6 @@
+{
+  "name": "BMCH Security Personnel Registration Portal",
+  "description": "Online recruitment registration & fee payment portal for Security Guards & Supervisors at Barpeta Medical College and Hospital (GeM Bid: GEM/2026/B/8101646).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
