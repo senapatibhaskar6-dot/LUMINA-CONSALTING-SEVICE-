@@ -194,22 +194,27 @@ export const SmsNotificationModal: React.FC<SmsNotificationModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto flex-1 min-h-[44px] py-2 px-3 bg-sky-900 hover:bg-sky-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="w-full sm:w-auto flex-1 min-h-[44px] py-2 px-3 bg-sky-900 hover:bg-sky-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer active:scale-[0.98]"
           >
             <span>ৰচিদখন চাওক (View Receipt) →</span>
           </button>
-          {onBackToHome && (
-            <button
-              type="button"
-              onClick={() => {
-                onClose();
+          
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onClose();
+              if (onBackToHome) {
                 onBackToHome();
-              }}
-              className="w-full sm:w-auto min-h-[44px] py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs border border-slate-300 flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <span>মূল মেনুলৈ ঘূৰি যাওক (Main Menu)</span>
-            </button>
-          )}
+              } else if (typeof window !== 'undefined') {
+                window.location.href = '/#register';
+              }
+            }}
+            className="w-full sm:w-auto min-h-[44px] py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 font-semibold rounded-xl text-xs border border-slate-300 flex items-center justify-center transition-colors cursor-pointer active:scale-[0.98]"
+          >
+            <span>মূল মেনুলৈ ঘূৰি যাওক (Main Menu)</span>
+          </button>
         </div>
       </div>
     </div>

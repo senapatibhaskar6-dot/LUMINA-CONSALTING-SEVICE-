@@ -114,9 +114,18 @@ export default function App() {
   };
 
   const handleGoToMainMenu = () => {
+    setIsSmsModalOpen(false);
+    setIsPaymentModalOpen(false);
+    setIsLookupModalOpen(false);
+    setIsBidDetailsOpen(false);
+    setIsTrackerOpen(false);
     setPendingFormData(null);
     setFormKey((prev) => prev + 1);
     navigateToTab('register');
+    if (typeof window !== 'undefined') {
+      window.location.hash = '#register';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   // Sync to local storage
