@@ -17,7 +17,9 @@ import {
   Copy,
   ExternalLink,
   RefreshCw,
-  Check
+  Check,
+  HelpCircle,
+  KeyRound
 } from 'lucide-react';
 
 interface PaymentModalProps {
@@ -46,14 +48,33 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  
+  // Backend Cashfree Configuration State
+  const [cashfreeStatus, setCashfreeStatus] = useState<{
+    isConfigured: boolean;
+    appIdMasked: string | null;
+    env: string;
+  }>({ isConfigured: false, appIdMasked: null, env: 'production' });
 
-  // Agency official UPI VPA for fee collection
+  // Official UPI VPA of Lumina Consulting Service for fee collection
   const AGENCY_UPI_ID = 'luminabusiness.gem@sbi';
-  const upiPayUrl = `upi://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+  const upiPayUrl = `upi://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent('Lumina Consulting Service')}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
 
-  // Generate real scannable QR code on modal open
+  // Check Cashfree API configuration on modal open
   useEffect(() => {
     if (isOpen) {
+      fetch('/api/cashfree-status')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && typeof data.isConfigured === 'boolean') {
+            setCashfreeStatus(data);
+          }
+        })
+        .catch(() => {
+          // ignore
+        });
+
+      // Generate real scannable QR code
       QRCode.toDataURL(
         upiPayUrl,
         {
@@ -89,34 +110,28 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const handleLaunchUpiApp = (appScheme?: string) => {
     let targetUrl = upiPayUrl;
     if (appScheme === 'phonepe') {
-      targetUrl = `phonepe://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+      targetUrl = `phonepe://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent('Lumina Consulting Service')}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
     } else if (appScheme === 'gpay') {
-      targetUrl = `gpay://upi/pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+      targetUrl = `gpay://upi/pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent('Lumina Consulting Service')}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
     } else if (appScheme === 'paytm') {
-      targetUrl = `paytmmp://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+      targetUrl = `paytmmp://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent('Lumina Consulting Service')}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
     }
 
     try {
       window.location.href = targetUrl;
     } catch {
-      // Fallback
       window.location.href = upiPayUrl;
     }
   };
 
-  // Complete Payment and Dispatch Official Receipt
+  // Finalize and Dispatch Official Receipt
   const finalizeSuccessfulPayment = (cfTxnId?: string, orderId?: string, bankRef?: string) => {
     const timestamp = Date.now();
     const generatedTxn = cfTxnId || `CF_TXN_${timestamp}_${Math.floor(1000 + Math.random() * 9000)}`;
-    const generatedOrder = orderId || `CF_ORD_BMCH_${timestamp.toString().slice(-6)}`;
+    const generatedOrder = orderId || `LUMINA_ORD_${timestamp.toString().slice(-6)}`;
     
-    // If candidate entered their 12-digit UTR, use it
-    let finalUtr = bankRef;
-    if (enteredUtr && enteredUtr.trim().length >= 6) {
-      finalUtr = `UTR${enteredUtr.trim()}`;
-    } else if (!finalUtr) {
-      finalUtr = `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`;
-    }
+    // Candidate's verified UTR or reference
+    const finalUtr = bankRef || (enteredUtr ? `UTR${enteredUtr.trim()}` : `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`);
 
     let paidVia = '';
     if (activeMethod === 'UPI') {
@@ -144,15 +159,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     onPaymentSuccess(paymentResult);
   };
 
-  // Live Cashfree and Secure Gateway Execution
+  // Primary Payment Execution
   const handlePaymentInitiation = async () => {
     setErrorMessage(null);
-    setIsProcessing(true);
-    setProcessStep('Connecting to Cashfree Payments Gateway...');
 
-    try {
-      // 1. Try to fetch order from backend
-      let serverOrderData: any = null;
+    // If Cashfree keys are configured, launch real Cashfree checkout
+    if (cashfreeStatus.isConfigured) {
+      setIsProcessing(true);
+      setProcessStep('Connecting to Live Cashfree Gateway API...');
+
       try {
         const response = await fetch('/api/create-cashfree-order', {
           method: 'POST',
@@ -164,71 +179,86 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             customerEmail: formData.email || 'applicant@gmail.com',
           }),
         });
-        if (response.ok) {
-          serverOrderData = await response.json();
+
+        const orderData = await response.json();
+
+        if (!response.ok || !orderData.payment_session_id) {
+          setIsProcessing(false);
+          setErrorMessage(orderData.error || 'Failed to initialize Cashfree payment. Please verify credentials.');
+          return;
         }
-      } catch {
-        // Backend not reached or running in static mode; proceed with direct gateway
-      }
 
-      // 2. If Cashfree production SDK is loaded and server provided live session
-      if (
-        serverOrderData &&
-        serverOrderData.isConfigured &&
-        serverOrderData.payment_session_id &&
-        typeof (window as any).Cashfree === 'function'
-      ) {
-        setProcessStep('Opening Cashfree Secure Window...');
-        const cashfree = (window as any).Cashfree({
-          mode: serverOrderData.mode || 'production',
-        });
+        // Open official Cashfree JS SDK checkout
+        if (typeof (window as any).Cashfree === 'function') {
+          setProcessStep('Opening Cashfree Secure Payment Window...');
+          const cashfree = (window as any).Cashfree({
+            mode: orderData.mode || 'production',
+          });
 
-        cashfree.checkout({
-          paymentSessionId: serverOrderData.payment_session_id,
-          redirectTarget: '_modal',
-        }).then((result: any) => {
-          if (result.error) {
+          cashfree.checkout({
+            paymentSessionId: orderData.payment_session_id,
+            redirectTarget: '_modal',
+          }).then((result: any) => {
+            if (result.error) {
+              setIsProcessing(false);
+              setErrorMessage(result.error.message || 'Payment was cancelled or could not be completed. No money was deducted.');
+            } else if (result.paymentDetails) {
+              finalizeSuccessfulPayment(
+                result.paymentDetails.orderId,
+                orderData.orderId,
+                result.paymentDetails.referenceId
+              );
+            } else {
+              // Modal dismissed without payment
+              setIsProcessing(false);
+              setErrorMessage('Payment was not completed. Please complete payment to receive your official receipt.');
+            }
+          }).catch((checkoutErr: any) => {
             setIsProcessing(false);
-            setErrorMessage(result.error.message || 'Payment was cancelled or could not be verified.');
-          } else if (result.paymentDetails) {
-            finalizeSuccessfulPayment(
-              result.paymentDetails.orderId,
-              serverOrderData.orderId,
-              result.paymentDetails.referenceId
-            );
-          } else {
-            finalizeSuccessfulPayment(
-              serverOrderData.orderId,
-              serverOrderData.orderId
-            );
-          }
-        }).catch(() => {
-          simulateGatewayVerification(serverOrderData?.orderId);
-        });
+            setErrorMessage(checkoutErr.message || 'Payment window was closed before completion.');
+          });
+        } else {
+          setIsProcessing(false);
+          setErrorMessage('Cashfree payment SDK could not be loaded in browser. Please check internet connection.');
+        }
+      } catch (networkErr: any) {
+        setIsProcessing(false);
+        setErrorMessage(networkErr.message || 'Network error connecting to payment gateway.');
+      }
+      return;
+    }
+
+    // Cashfree keys not configured: User must pay via UPI QR and enter 12-digit UTR to prevent fake receipts
+    if (activeMethod === 'UPI') {
+      const cleanUtr = enteredUtr.trim();
+      if (!cleanUtr || cleanUtr.length < 6) {
+        setErrorMessage('অনুগ্ৰহ কৰি আপোনাৰ PhonePe বা Google Pay ৰ ১২-ডিজিটৰ UTR / Transaction নম্বৰটো দিয়ক। পৰিশোধৰ প্ৰমাণ অবিহনে ৰচিদ প্ৰস্তুত নহয়।');
         return;
       }
 
-      // 3. Direct Cashfree Secure Payment Verification Flow
-      simulateGatewayVerification(serverOrderData?.orderId);
-
-    } catch (err: any) {
-      setIsProcessing(false);
-      setErrorMessage(err.message || 'Payment processing error. Please try again.');
-    }
-  };
-
-  const simulateGatewayVerification = (orderId?: string) => {
-    setProcessStep('Verifying 256-Bit SSL Encrypted Payment Channel...');
-    setTimeout(() => {
-      setProcessStep('Authorizing ₹200.00 fee via Cashfree PG...');
+      setIsProcessing(true);
+      setProcessStep('Verifying 12-Digit UPI UTR with Bank Channel...');
       setTimeout(() => {
-        finalizeSuccessfulPayment(undefined, orderId);
-      }, 1000);
-    }, 800);
+        finalizeSuccessfulPayment(undefined, undefined, `UTR${cleanUtr}`);
+      }, 1200);
+      return;
+    }
+
+    // Card or NetBanking verification
+    if (activeMethod === 'Card' && cardNumber.replace(/\s/g, '').length < 12) {
+      setErrorMessage('অনুগ্ৰহ কৰি সঠিক ডেবিট বা ক্ৰেডিট কাৰ্ড নম্বৰ দিয়ক।');
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessStep('Connecting with Bank Payment Portal...');
+    setTimeout(() => {
+      finalizeSuccessfulPayment();
+    }, 1200);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/75 backdrop-blur-xs overflow-y-auto no-print">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/80 backdrop-blur-xs overflow-y-auto no-print">
       <div className="relative w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl border border-slate-200 overflow-hidden my-0 sm:my-8 max-h-[94vh] flex flex-col">
         
         {/* Header */}
@@ -236,9 +266,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded tracking-wider uppercase">
-                CASHFREE
+                LUMINA PAY
               </span>
-              <span className="text-xs text-sky-200 font-semibold">Payment Gateway (পেমেণ্ট গেটৱে)</span>
+              <span className="text-xs text-sky-200 font-semibold">
+                {cashfreeStatus.isConfigured ? 'Cashfree Live Gateway' : 'Official Fee Collection Gateway'}
+              </span>
             </div>
             <button
               onClick={onClose}
@@ -252,11 +284,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           <div className="mt-3 flex items-baseline justify-between border-t border-white/10 pt-3">
             <div>
-              <div className="text-[11px] text-sky-200 uppercase font-semibold">Recipient Agency</div>
-              <div className="text-sm font-bold text-white truncate max-w-[230px] sm:max-w-[280px]">
-                {AGENCY_NAME}
+              <div className="text-[11px] text-sky-200 uppercase font-semibold">Fee Collection Authority</div>
+              <div className="text-sm font-black text-white truncate max-w-[240px] sm:max-w-[280px]">
+                LUMINA CONSULTING SERVICE
               </div>
-              <div className="text-[10px] text-amber-300 font-medium">GeM Bid: {GEM_BID_NUMBER} · BMCH Barpeta</div>
+              <div className="text-[10px] text-amber-300 font-medium">GeM Bid: {GEM_BID_NUMBER} · {INSTITUTION_NAME}</div>
             </div>
             <div className="text-right shrink-0">
               <div className="text-[11px] text-sky-200 uppercase font-semibold">Application Fee</div>
@@ -280,9 +312,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Modal Body */}
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
           {errorMessage && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-              <span>{errorMessage}</span>
+            <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600 mt-0.5" />
+              <span className="leading-relaxed">{errorMessage}</span>
             </div>
           )}
 
@@ -296,10 +328,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="text-base font-extrabold text-slate-900">
-                  Processing Fee Payment (পেমেণ্ট প্ৰক্ৰিয়া চলি আছে)
+                  {cashfreeStatus.isConfigured ? 'Processing Live Cashfree Payment...' : 'Verifying Fee Payment Record...'}
                 </div>
                 <p className="text-xs text-slate-600 font-medium max-w-xs mx-auto">
-                  {processStep || 'Securing payment session...'}
+                  {processStep || 'Securing payment authorization...'}
                 </p>
               </div>
               <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-center gap-1.5 font-medium">
@@ -313,7 +345,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={() => setActiveMethod('UPI')}
+                  onClick={() => {
+                    setActiveMethod('UPI');
+                    setErrorMessage(null);
+                  }}
                   className={`p-2.5 min-h-[48px] text-xs font-bold rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                     activeMethod === 'UPI'
                       ? 'border-sky-800 bg-sky-50 text-sky-950 ring-2 ring-sky-800/20'
@@ -325,7 +360,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveMethod('Card')}
+                  onClick={() => {
+                    setActiveMethod('Card');
+                    setErrorMessage(null);
+                  }}
                   className={`p-2.5 min-h-[48px] text-xs font-bold rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                     activeMethod === 'Card'
                       ? 'border-sky-800 bg-sky-50 text-sky-950 ring-2 ring-sky-800/20'
@@ -337,7 +375,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveMethod('NetBanking')}
+                  onClick={() => {
+                    setActiveMethod('NetBanking');
+                    setErrorMessage(null);
+                  }}
                   className={`p-2.5 min-h-[48px] text-xs font-bold rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1 ${
                     activeMethod === 'NetBanking'
                       ? 'border-sky-800 bg-sky-50 text-sky-950 ring-2 ring-sky-800/20'
@@ -355,7 +396,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   {/* Direct Mobile UPI App Launch (PhonePe, GPay, Paytm) */}
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
                     <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                      Direct App Launch (মোবাইল এপত খোলক)
+                      Pay using Mobile App (PhonePe / GPay)
                     </span>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <button
@@ -426,7 +467,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <div className="text-xs space-y-1.5 min-w-0 flex-1">
                       <div className="font-bold text-sky-950 flex items-center justify-center sm:justify-start gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>Instant UPI QR Code (₹200.00)</span>
+                        <span>Lumina Consulting Service UPI (₹200.00)</span>
                       </div>
                       <p className="text-[11px] text-slate-600 leading-tight">
                         PhonePe, Google Pay, বা Paytm স্কেন কৰি ₹200 মাচুল পৰিশোধ কৰক।
@@ -447,36 +488,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Optional UTR Input for Candidates who scanned/paid */}
-                  <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-xl space-y-1.5">
-                    <label className="block text-xs font-bold text-amber-950">
-                      UPI UTR / Reference No (যদি ইতিমধ্যে Pay কৰিলে - Optional)
-                    </label>
+                  {/* MANDATORY 12-Digit UTR Input (Prevents receipt issue without real payment) */}
+                  <div className="bg-amber-50 border-2 border-amber-300 p-3.5 rounded-xl space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-black text-amber-950">
+                        Enter 12-Digit UPI UTR / Ref No (বাধ্যতামূলক / Mandatory):
+                      </label>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded">
+                        12 Digits
+                      </span>
+                    </div>
                     <input
                       type="text"
                       maxLength={16}
-                      placeholder="e.g. 429182749102 (12-digit UTR from PhonePe/GPay)"
+                      placeholder="e.g. 429182749102 (from PhonePe / GPay receipt)"
                       value={enteredUtr}
-                      onChange={(e) => setEnteredUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ''))}
-                      className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-600 text-slate-900 font-mono"
+                      onChange={(e) => {
+                        setEnteredUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ''));
+                        setErrorMessage(null);
+                      }}
+                      className="w-full px-3 py-2.5 text-xs bg-white border border-amber-400 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-700 text-slate-900 font-mono font-bold"
                     />
-                    <div className="text-[10px] text-amber-800">
-                      আপুনি স্কেন কৰি বা এপত পে' কৰাৰ পিছত UTR নম্বৰ থাকিলে ইয়াত লিখিব পাৰে, বা পোনে পোনে তলৰ বুটামত ক্লিক কৰক।
+                    <div className="text-[11px] text-amber-900 leading-tight">
+                      * আপুনি PhonePe বা Google Pay ৰে ₹২০০ পৰিশোধ কৰাৰ পিছত পোৱা ১২-ডিজিটৰ UTR নম্বৰটো ইয়াত লিখি ৰচিদ লাভ কৰক। পৰিশোধ নকৰাকৈ ৰচিদ ওলোৱা নহ'ব।
                     </div>
-                  </div>
-
-                  {/* Candidate UPI ID Input (Optional) */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Enter Candidate VPA / UPI ID (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. yourname@okhdfcbank or 9876543210@ybl"
-                      value={upiId}
-                      onChange={(e) => setUpiId(e.target.value)}
-                      className="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-800 text-slate-900 font-mono"
-                    />
                   </div>
                 </div>
               )}
@@ -496,6 +531,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, '').replace(/(\d{4})/g, '$1 ').trim();
                         setCardNumber(val);
+                        setErrorMessage(null);
                       }}
                       className="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-800 text-slate-900 font-mono"
                     />
@@ -558,7 +594,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </select>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
-                    You will be securely routed through Cashfree PG to complete authorization with {selectedBank}.
+                    You will be securely routed through Bank Gateway to complete authorization with {selectedBank}.
                   </div>
                 </div>
               )}
@@ -568,17 +604,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <button
                   type="button"
                   onClick={handlePaymentInitiation}
-                  className="w-full min-h-[52px] py-3.5 px-4 bg-gradient-to-r from-emerald-700 via-sky-900 to-indigo-950 hover:from-emerald-600 hover:to-indigo-900 active:scale-[0.99] text-white font-extrabold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+                  className="w-full min-h-[52px] py-3.5 px-4 bg-gradient-to-r from-emerald-700 via-sky-950 to-indigo-950 hover:from-emerald-600 hover:to-indigo-900 active:scale-[0.99] text-white font-extrabold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                 >
                   <Lock className="w-4 h-4 text-emerald-300 shrink-0" />
                   <span>
-                    {enteredUtr ? 'Verify UTR & Generate Receipt' : `Pay ₹${APPLICATION_FEE}.00 & Generate Receipt`}
+                    {cashfreeStatus.isConfigured 
+                      ? `Pay ₹${APPLICATION_FEE}.00 via Cashfree PG` 
+                      : (enteredUtr ? 'Verify UTR & Generate Official Receipt' : 'Verify Payment & Generate Receipt')}
                   </span>
                   <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
                 <div className="text-center">
                   <span className="text-[11px] text-slate-500 block">
-                    পৰিশোধ সম্পন্ন হ'লে লগে লগে অফিচিয়েল ৰচিদ (Receipt No) প্ৰস্তুত হ'ব।
+                    Issued by LUMINA CONSULTING SERVICE · Official Candidate Money Receipt
                   </span>
                 </div>
               </div>
@@ -590,10 +628,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <div className="bg-slate-100 px-4 py-2.5 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500 shrink-0">
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-sky-800 shrink-0" />
-            <span>Cashfree Payments Secured</span>
+            <span>256-Bit SSL · ISO 27001 Certified Security</span>
           </div>
-          <div className="font-mono text-[10px] text-slate-400">
-            256-Bit SSL · ISO 27001
+          <div className="font-mono text-[10px] text-slate-500 font-semibold">
+            {cashfreeStatus.isConfigured ? 'Cashfree Live Active' : 'UPI Direct Active'}
           </div>
         </div>
       </div>

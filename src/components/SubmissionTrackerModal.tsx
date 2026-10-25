@@ -46,7 +46,7 @@ export const SubmissionTrackerModal: React.FC<SubmissionTrackerModalProps> = ({
   // Search and filtered list
   const filteredList = allRecords.filter((rec) => {
     const term = searchTerm.trim().toLowerCase();
-    const receiptNo = rec.receiptNumber || `BMCH-REC-2026-${rec.registrationId.replace(/[^0-9]/g, '').slice(-5) || '10294'}`;
+    const receiptNo = rec.receiptNumber || `LUMINA-REC-2026-${rec.registrationId.replace(/[^0-9]/g, '').slice(-5) || '10294'}`;
     const matchesSearch =
       !term ||
       receiptNo.toLowerCase().includes(term) ||

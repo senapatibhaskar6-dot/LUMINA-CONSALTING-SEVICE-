@@ -47,6 +47,7 @@ const STORAGE_KEY = 'bmch_security_registrations_2026';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'register' | 'receipt' | 'bidInfo'>('register');
+  const [formKey, setFormKey] = useState(0);
   const [allRecords, setAllRecords] = useState<ApplicationRecord[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -91,6 +92,33 @@ export default function App() {
   const [isBidDetailsOpen, setIsBidDetailsOpen] = useState(false);
   const [isTrackerOpen, setIsTrackerOpen] = useState(false);
 
+  // Sync with browser history and hash navigation
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'register' || hash === 'receipt' || hash === 'bidInfo') {
+        setActiveTab(hash as any);
+      }
+    };
+    if (window.location.hash) {
+      handleHash();
+    }
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  const navigateToTab = (tab: 'register' | 'receipt' | 'bidInfo') => {
+    setActiveTab(tab);
+    window.location.hash = '#' + tab;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleGoToMainMenu = () => {
+    setPendingFormData(null);
+    setFormKey((prev) => prev + 1);
+    navigateToTab('register');
+  };
+
   // Sync to local storage
   useEffect(() => {
     try {
@@ -110,10 +138,10 @@ export default function App() {
   const handlePaymentSuccess = (payment: PaymentDetails) => {
     if (!pendingFormData) return;
 
-    // Generate unique registration ID and Official Receipt Number
+    // Generate unique registration ID and Official Receipt Number with LUMINA prefix
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
-    const newRegId = `BMCH-SEC-2026-${randomSuffix}`;
-    const newReceiptNo = `BMCH-REC-2026-${randomSuffix}`;
+    const newRegId = `LUMINA-SEC-2026-${randomSuffix}`;
+    const newReceiptNo = `LUMINA-REC-2026-${randomSuffix}`;
 
     const newRecord: ApplicationRecord = {
       registrationId: newRegId,
@@ -143,13 +171,13 @@ export default function App() {
     }
 
     // Switch to receipt and automatically pop up the SMS Notification modal
-    setActiveTab('receipt');
+    navigateToTab('receipt');
     setIsSmsModalOpen(true);
   };
 
   const handleSelectRecordFromLookup = (rec: ApplicationRecord) => {
     setCurrentRecord(rec);
-    setActiveTab('receipt');
+    navigateToTab('receipt');
   };
 
   return (
@@ -158,10 +186,12 @@ export default function App() {
       <Header
         activeTab={activeTab}
         setActiveTab={(tab) => {
-          if (tab === 'bidInfo') {
+          if (tab === 'register') {
+            handleGoToMainMenu();
+          } else if (tab === 'bidInfo') {
             setIsBidDetailsOpen(true);
           } else {
-            setActiveTab(tab);
+            navigateToTab(tab);
           }
         }}
         hasActiveReceipt={!!currentRecord}
@@ -281,7 +311,7 @@ export default function App() {
             </div>
 
             {/* Registration Form Component */}
-            <RegistrationForm onSubmit={handleFormSubmit} />
+            <RegistrationForm key={formKey} onSubmit={handleFormSubmit} />
           </div>
         )}
 
@@ -290,15 +320,8 @@ export default function App() {
             <PaymentReceipt
               record={currentRecord}
               onOpenSms={() => setIsSmsModalOpen(true)}
-              onNewRegistration={() => {
-                setPendingFormData(null);
-                setActiveTab('register');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              onBackToHome={() => {
-                setActiveTab('register');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
+              onNewRegistration={handleGoToMainMenu}
+              onBackToHome={handleGoToMainMenu}
             />
           ) : (
             <div className="bg-white rounded-2xl p-6 sm:p-12 border border-slate-200 text-center max-w-xl mx-auto shadow-xs space-y-4">
@@ -381,10 +404,7 @@ export default function App() {
         <div className="grid grid-cols-4 items-center h-14">
           <button
             type="button"
-            onClick={() => {
-              setActiveTab('register');
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+            onClick={handleGoToMainMenu}
             className={`flex flex-col items-center justify-center h-full min-h-[44px] cursor-pointer touch-manipulation transition-colors ${
               activeTab === 'register' ? 'text-sky-900 font-bold' : 'text-slate-500 hover:text-slate-800'
             }`}
@@ -397,8 +417,7 @@ export default function App() {
             type="button"
             onClick={() => {
               if (currentRecord) {
-                setActiveTab('receipt');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                navigateToTab('receipt');
               } else {
                 setIsLookupModalOpen(true);
               }
@@ -452,10 +471,7 @@ export default function App() {
           record={currentRecord}
           isOpen={isSmsModalOpen}
           onClose={() => setIsSmsModalOpen(false)}
-          onBackToHome={() => {
-            setActiveTab('register');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onBackToHome={handleGoToMainMenu}
           onResendSms={() => {
             // Show temporary status
           }}

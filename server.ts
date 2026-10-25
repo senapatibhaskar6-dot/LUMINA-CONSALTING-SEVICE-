@@ -11,11 +11,23 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
+// Status check route for Cashfree
+app.get('/api/cashfree-status', (_req, res) => {
+  const appId = process.env.CASHFREE_APP_ID;
+  const secretKey = process.env.CASHFREE_SECRET_KEY;
+  const isConfigured = Boolean(appId && secretKey && !appId.includes('YOUR_'));
+  res.json({
+    isConfigured,
+    appIdMasked: isConfigured && appId ? `${appId.slice(0, 4)}...${appId.slice(-4)}` : null,
+    env: process.env.CASHFREE_ENV || 'production',
+  });
+});
+
 // API route for Cashfree order creation
 app.post('/api/create-cashfree-order', async (req, res) => {
   try {
     const { amount, customerName, customerPhone, customerEmail } = req.body;
-    const orderId = `BMCH_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderId = `LUMINA_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
 
     const appId = process.env.CASHFREE_APP_ID;
     const secretKey = process.env.CASHFREE_SECRET_KEY;
