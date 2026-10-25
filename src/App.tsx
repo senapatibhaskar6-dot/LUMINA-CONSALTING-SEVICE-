@@ -109,6 +109,85 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
+  // Check for Cashfree order return in URL parameters (?order_id=...)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const orderIdParam = params.get('order_id');
+    if (orderIdParam) {
+      fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(orderIdParam)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.isPaid) {
+            const randomSuffix = Math.floor(10000 + Math.random() * 90000);
+            const newRegId = `LUMINA-SEC-2026-${randomSuffix}`;
+            const newReceiptNo = `LUMINA-REC-2026-${randomSuffix}`;
+            const txnId = data.payment?.cf_payment_id || `CF_${orderIdParam}`;
+            const bankRef = data.payment?.bank_reference || `REF_${orderIdParam}`;
+
+            setAllRecords((prev) => {
+              const exists = prev.find((r) => r.payment.orderId === orderIdParam);
+              if (exists) {
+                setCurrentRecord(exists);
+                return prev;
+              }
+              const newRec: ApplicationRecord = {
+                registrationId: newRegId,
+                receiptNumber: newReceiptNo,
+                createdAt: new Date().toISOString(),
+                formData: pendingFormData || {
+                  position: 'Unarmed Security Guard',
+                  fullName: data.payment?.customer_name || 'Registered Applicant',
+                  fatherName: 'Not Specified',
+                  dob: '2000-01-01',
+                  gender: 'Male',
+                  qualification: 'HSLC / 10th Passed',
+                  villageTown: 'Barpeta Town',
+                  postOffice: 'Barpeta',
+                  district: 'Barpeta',
+                  pinCode: '781301',
+                  contactNumber: data.payment?.customer_phone || '9876543210',
+                  aadhaarNumber: 'XXXX-XXXX-XXXX',
+                  email: data.payment?.customer_email || 'applicant@gmail.com',
+                  experienceYears: '0',
+                  isExServicemen: 'No',
+                  drivingLicenseNo: '',
+                  drivingLicenseValidUpTo: '',
+                  acceptedDeclaration: true,
+                },
+                payment: {
+                  transactionId: txnId,
+                  orderId: orderIdParam,
+                  amount: data.amount || 200,
+                  currency: 'INR',
+                  paymentMethod: 'UPI',
+                  paymentGateway: 'Cashfree Payments',
+                  status: 'SUCCESS',
+                  paidAt: new Date().toISOString(),
+                  bankRefNo: bankRef,
+                  upiIdOrCardLast4: 'Cashfree Verified',
+                },
+                smsSent: true,
+                smsTimestamp: new Date().toISOString(),
+              };
+              setCurrentRecord(newRec);
+              return [newRec, ...prev];
+            });
+
+            try {
+              confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+            } catch {}
+            setActiveTab('receipt');
+            setIsSmsModalOpen(true);
+            window.history.replaceState({}, '', window.location.pathname + '#receipt');
+          }
+        })
+        .catch((err) => {
+          console.error('Error verifying returned Cashfree order:', err);
+        });
+    }
+  }, [pendingFormData]);
+
   const navigateToTab = (tab: 'register' | 'receipt' | 'bidInfo') => {
     setActiveTab(tab);
     window.location.hash = '#' + tab;

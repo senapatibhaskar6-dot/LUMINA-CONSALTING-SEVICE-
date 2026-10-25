@@ -49,16 +49,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   
-  // Backend Cashfree Configuration State
+  // Backend Cashfree Configuration State (Default true with active merchant credentials)
   const [cashfreeStatus, setCashfreeStatus] = useState<{
     isConfigured: boolean;
     appIdMasked: string | null;
     env: string;
-  }>({ isConfigured: false, appIdMasked: null, env: 'production' });
+  }>({ isConfigured: true, appIdMasked: '1460...0641', env: 'production' });
 
   // Official UPI VPA of Lumina Consulting Service for fee collection
   const AGENCY_UPI_ID = 'luminabusiness.gem@sbi';
   const upiPayUrl = `upi://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent('Lumina Consulting Service')}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+
+  // Helper to ensure Cashfree JS SDK is loaded
+  const ensureCashfreeSdk = async (): Promise<boolean> => {
+    if (typeof (window as any).Cashfree === 'function') return true;
+    return new Promise((resolve) => {
+      const existing = document.querySelector('script[src*="cashfree.com/js/v3/cashfree.js"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(typeof (window as any).Cashfree === 'function'));
+        setTimeout(() => resolve(typeof (window as any).Cashfree === 'function'), 2500);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.appendChild(script);
+    });
+  };
 
   // Check Cashfree API configuration on modal open
   useEffect(() => {
@@ -159,16 +177,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     onPaymentSuccess(paymentResult);
   };
 
-  // Primary Payment Execution
+  // Primary Cashfree Live Gateway Execution
   const handlePaymentInitiation = async () => {
     setErrorMessage(null);
 
-    // If Cashfree keys are configured, launch real Cashfree checkout
+    // If Cashfree keys are active, connect directly with Cashfree PG
     if (cashfreeStatus.isConfigured) {
       setIsProcessing(true);
       setProcessStep('Connecting to Live Cashfree Gateway API...');
 
       try {
+        const returnUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}/?order_id={order_id}#receipt`
+          : undefined;
+
         const response = await fetch('/api/create-cashfree-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -177,6 +199,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             customerName: formData.fullName,
             customerPhone: formData.contactNumber,
             customerEmail: formData.email || 'applicant@gmail.com',
+            returnUrl,
           }),
         });
 
@@ -184,12 +207,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         if (!response.ok || !orderData.payment_session_id) {
           setIsProcessing(false);
-          setErrorMessage(orderData.error || 'Failed to initialize Cashfree payment. Please verify credentials.');
+          setErrorMessage(orderData.error || 'Failed to initialize Cashfree payment. Please check network connection.');
           return;
         }
 
-        // Open official Cashfree JS SDK checkout
-        if (typeof (window as any).Cashfree === 'function') {
+        // Ensure Cashfree SDK is ready
+        setProcessStep('Loading Cashfree Payment Gateway...');
+        const sdkReady = await ensureCashfreeSdk();
+
+        if (sdkReady && typeof (window as any).Cashfree === 'function') {
           setProcessStep('Opening Cashfree Secure Payment Window...');
           const cashfree = (window as any).Cashfree({
             mode: orderData.mode || 'production',
@@ -198,37 +224,67 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           cashfree.checkout({
             paymentSessionId: orderData.payment_session_id,
             redirectTarget: '_modal',
-          }).then((result: any) => {
-            if (result.error) {
+          }).then(async (result: any) => {
+            // Verify order directly with Cashfree backend on modal close/payment
+            setProcessStep('Verifying payment with Cashfree Server...');
+            try {
+              const verifyRes = await fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(orderData.orderId)}`);
+              const verifyData = await verifyRes.json();
+              if (verifyData.isPaid) {
+                const txnId = verifyData.payment?.cf_payment_id || result?.paymentDetails?.referenceId || orderData.cfOrderId;
+                const bankRef = verifyData.payment?.bank_reference || `CF_BANK_${Date.now().toString().slice(-6)}`;
+                finalizeSuccessfulPayment(txnId, orderData.orderId, bankRef);
+                return;
+              }
+            } catch (vErr) {
+              console.error('Order verification error:', vErr);
+            }
+
+            if (result?.paymentDetails) {
+              finalizeSuccessfulPayment(
+                result.paymentDetails.referenceId || result.paymentDetails.paymentId,
+                orderData.orderId,
+                result.paymentDetails.bankReference
+              );
+              return;
+            }
+
+            if (result?.error) {
               setIsProcessing(false);
               setErrorMessage(result.error.message || 'Payment was cancelled or could not be completed. No money was deducted.');
-            } else if (result.paymentDetails) {
-              finalizeSuccessfulPayment(
-                result.paymentDetails.orderId,
-                orderData.orderId,
-                result.paymentDetails.referenceId
-              );
-            } else {
-              // Modal dismissed without payment
-              setIsProcessing(false);
-              setErrorMessage('Payment was not completed. Please complete payment to receive your official receipt.');
+              return;
             }
-          }).catch((checkoutErr: any) => {
+
+            // Modal dismissed without payment completed
+            setIsProcessing(false);
+            setErrorMessage('Payment was not completed. If money was deducted, your receipt will be generated automatically upon verification.');
+          }).catch(async (checkoutErr: any) => {
+            console.error('Cashfree checkout modal error:', checkoutErr);
+            // Verify if paid before throwing error
+            try {
+              const verifyRes = await fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(orderData.orderId)}`);
+              const verifyData = await verifyRes.json();
+              if (verifyData.isPaid) {
+                finalizeSuccessfulPayment(verifyData.payment?.cf_payment_id, orderData.orderId, verifyData.payment?.bank_reference);
+                return;
+              }
+            } catch {}
+
             setIsProcessing(false);
             setErrorMessage(checkoutErr.message || 'Payment window was closed before completion.');
           });
         } else {
           setIsProcessing(false);
-          setErrorMessage('Cashfree payment SDK could not be loaded in browser. Please check internet connection.');
+          setErrorMessage('Cashfree payment SDK could not be loaded in browser. Please reload or check your internet connection.');
         }
       } catch (networkErr: any) {
         setIsProcessing(false);
-        setErrorMessage(networkErr.message || 'Network error connecting to payment gateway.');
+        setErrorMessage(networkErr.message || 'Network error connecting to Cashfree payment gateway.');
       }
       return;
     }
 
-    // Cashfree keys not configured: User must pay via UPI QR and enter 12-digit UTR to prevent fake receipts
+    // Direct UPI fallback if Cashfree status is disabled
     if (activeMethod === 'UPI') {
       const cleanUtr = enteredUtr.trim();
       if (!cleanUtr || cleanUtr.length < 6) {
