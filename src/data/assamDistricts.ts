@@ -51,8 +51,11 @@ export const SALARY_MATRIX = {
   'Security Supervisor': {
     monthlySalary: 'Rs. 26,178',
     monthlySalaryNumeric: 26178,
+    genderEligibility: 'Male Only',
+    experienceRequirement: 'Minimum 3 Years Security Experience',
+    ageLimit: '18 - 40 Years',
     note: 'Inclusive / excluding of PF and ESIC as applicable under GeM guidelines',
-    qualificationHint: 'Minimum 10th/12th Pass + Prior Security/Supervisor Experience + Valid Driving License required',
+    qualificationHint: 'Male candidates only · Minimum 3 Years Experience · Age 18-40 Years · Driving License required',
     dutySchedule: 'Rotating 3 Shifts (24x7 Coverage): Morning, Evening, Night',
     responsibilities: [
       'Supervision of security guards at all BMCH hospital blocks, OPD, ICU, and casualty wards',
@@ -63,8 +66,11 @@ export const SALARY_MATRIX = {
   'Unarmed Security Guard': {
     monthlySalary: 'Rs. 17,756',
     monthlySalaryNumeric: 17756,
+    genderEligibility: 'Male & Female (Both Eligible)',
+    experienceRequirement: '0+ Years (Freshers Eligible)',
+    ageLimit: '18 - 40 Years',
     note: 'Inclusive / excluding of PF and ESIC as applicable under GeM guidelines',
-    qualificationHint: 'Minimum 10th Pass (HSLC) / Physical fitness standard as per security norms',
+    qualificationHint: 'Both Male & Female can apply · 0+ Years (Freshers welcome) · Age 18-40 Years · Min 10th Pass',
     dutySchedule: 'Rotating 3 Shifts (24x7 Coverage): Morning, Evening, Night (8 Hours each)',
     responsibilities: [
       'Stationary and perimeter patrolling of hospital premises and emergency gates',

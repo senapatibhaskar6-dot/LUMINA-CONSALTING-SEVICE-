@@ -76,6 +76,28 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
       value = value.replace(/\D/g, '').slice(0, 16);
     }
 
+    // When switching position, adjust constraints automatically
+    if (field === 'position') {
+      if (value === 'Security Supervisor') {
+        setFormData((prev) => ({
+          ...prev,
+          position: 'Security Supervisor',
+          // Supervisor is Male only
+          gender: prev.gender === 'Female' ? 'Male' : prev.gender,
+          // Supervisor requires min 3 years experience
+          experienceYears: (prev.experienceYears === '0' || prev.experienceYears === '1' || prev.experienceYears === '2') ? '3' : prev.experienceYears,
+        }));
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next.position;
+          delete next.gender;
+          delete next.experienceYears;
+          return next;
+        });
+        return;
+      }
+    }
+
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -119,14 +141,24 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         age--;
       }
       if (age < 18) {
-        newErrors.dob = 'Applicant must be at least 18 years old to apply.';
-      } else if (age > 60) {
-        newErrors.dob = 'Maximum age limit for security recruitment is 60 years.';
+        newErrors.dob = 'Applicant must be at least 18 years old to apply (নূন্যতম বয়স ১৮ বছৰ).';
+      } else if (age > 40) {
+        newErrors.dob = 'Maximum age limit is 40 years as per recruitment rules (সৰ্বোচ্চ বয়সৰ সীমা ৪০ বছৰ).';
       }
     }
 
     if (!formData.gender) {
       newErrors.gender = 'Please select your Gender.';
+    } else if (formData.position === 'Security Supervisor' && formData.gender !== 'Male') {
+      newErrors.gender = 'কেৱল পুৰুষ প্ৰাৰ্থীয়েহে ছিকিউৰিটি ছুপাৰভাইজাৰ পদৰ বাবে আবেদন কৰিব পাৰিব (Only Male candidates are eligible for Security Supervisor post).';
+    }
+
+    // Experience validation for Supervisor (minimum 3 years)
+    if (formData.position === 'Security Supervisor') {
+      const exp = formData.experienceYears;
+      if (exp === '0' || exp === '1' || exp === '2') {
+        newErrors.experienceYears = 'Security Supervisor পদৰ বাবে কমেও ৩ বছৰৰ অভিজ্ঞতা থাকিব লাগিব (Minimum 3 years experience required for Supervisor).';
+      }
     }
 
     if (!formData.qualification) {
@@ -310,9 +342,14 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
 
           {/* Date of Birth */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-              Date of Birth <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Date of Birth <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                Age: 18 - 40 Years
+              </span>
+            </div>
             <div className="relative">
               <input
                 type="date"
@@ -330,17 +367,28 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
             {errors.dob ? (
               <p className="text-xs text-red-600 mt-1 font-medium">{errors.dob}</p>
             ) : (
-              <p className="text-[11px] text-slate-400 mt-1">
-                Age must be between 18 and 60 years as on date of application.
+              <p className="text-[11px] text-slate-500 mt-1">
+                বয়স ১৮ ৰ পৰা ৪০ বছৰৰ ভিতৰত হ'ব লাগিব (Age must be between 18 and 40 years).
               </p>
             )}
           </div>
 
           {/* Gender */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-              Gender <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Gender <span className="text-red-500">*</span>
+              </label>
+              {formData.position === 'Security Supervisor' ? (
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
+                  Only Male for Supervisor
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                  Male & Female Eligible
+                </span>
+              )}
+            </div>
             <select
               value={formData.gender}
               onChange={(e) => handleChange('gender', e.target.value)}
@@ -352,12 +400,26 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               }`}
             >
               <option value="">-- Select Gender --</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Other">Other</option>
+              <option value="Male">Male (পুৰুষ)</option>
+              {formData.position === 'Security Supervisor' ? (
+                <option value="Female" disabled>Female (মহিলা - Supervisor পদৰ বাবে প্ৰযোজ্য নহয়)</option>
+              ) : (
+                <option value="Female">Female (মহিলা - Guard পদৰ বাবে যোগ্য)</option>
+              )}
+              {formData.position !== 'Security Supervisor' && (
+                <option value="Other">Other</option>
+              )}
             </select>
-            {errors.gender && (
+            {errors.gender ? (
               <p className="text-xs text-red-600 mt-1 font-medium">{errors.gender}</p>
+            ) : formData.position === 'Security Supervisor' ? (
+              <p className="text-[11px] text-blue-700 mt-1 font-medium">
+                ছিকিউৰিটি ছুপাৰভাইজাৰ পদৰ বাবে কেৱল পুৰুষ প্ৰাৰ্থী প্ৰযোজ্য (Only Male for Supervisor).
+              </p>
+            ) : (
+              <p className="text-[11px] text-emerald-700 mt-1 font-medium">
+                ছিকিউৰিটি গাৰ্ড পদৰ বাবে মহিলা আৰু পুৰুষ উভয়ে আবেদন কৰিব পাৰিব (Male & Female both eligible).
+              </p>
             )}
           </div>
 
@@ -617,22 +679,59 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {/* Total Years of Experience */}
           <div>
-            <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-              Total Years of Experience (Security / Defense) <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Total Years of Experience <span className="text-red-500">*</span>
+              </label>
+              {formData.position === 'Security Supervisor' ? (
+                <span className="text-[10px] font-bold text-blue-800 bg-blue-100 px-2 py-0.5 rounded">
+                  Min 3 Years Required
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
+                  0+ Years (Freshers Eligible)
+                </span>
+              )}
+            </div>
             <select
               value={formData.experienceYears}
               onChange={(e) => handleChange('experienceYears', e.target.value)}
-              className="w-full px-3.5 py-3 min-h-[46px] rounded-xl border border-slate-300 text-base sm:text-sm bg-white transition-colors outline-none cursor-pointer focus:border-sky-800"
+              className={`w-full px-3.5 py-3 min-h-[46px] rounded-xl border text-base sm:text-sm bg-white transition-colors outline-none cursor-pointer ${
+                errors.experienceYears
+                  ? 'border-red-400 bg-red-50/30 focus:border-red-500'
+                  : 'border-slate-300 focus:border-sky-800'
+              }`}
             >
-              <option value="0">Fresher (0 Years)</option>
-              <option value="1">1 Year Experience</option>
-              <option value="2">2 Years Experience</option>
-              <option value="3">3 Years Experience</option>
-              <option value="4">4 Years Experience</option>
-              <option value="5+">5+ Years Experience</option>
-              <option value="10+">10+ Years (Senior / Veteran)</option>
+              {formData.position === 'Security Supervisor' ? (
+                <>
+                  <option value="3">3 Years Experience (নূন্যতম ৩ বছৰ প্ৰয়োজনীয়)</option>
+                  <option value="4">4 Years Experience</option>
+                  <option value="5+">5+ Years Experience</option>
+                  <option value="10+">10+ Years (Senior / Veteran)</option>
+                </>
+              ) : (
+                <>
+                  <option value="0">Fresher (০ বছৰ - কোনো অভিজ্ঞতা নাথাকিলেও পাৰিব)</option>
+                  <option value="1">1 Year Experience</option>
+                  <option value="2">2 Years Experience</option>
+                  <option value="3">3 Years Experience</option>
+                  <option value="4">4 Years Experience</option>
+                  <option value="5+">5+ Years Experience</option>
+                  <option value="10+">10+ Years (Senior / Veteran)</option>
+                </>
+              )}
             </select>
+            {errors.experienceYears ? (
+              <p className="text-xs text-red-600 mt-1 font-medium">{errors.experienceYears}</p>
+            ) : formData.position === 'Security Supervisor' ? (
+              <p className="text-[11px] text-blue-800 mt-1 font-medium">
+                ছুপাৰভাইজাৰ পদৰ বাবে নূন্যতম ৩ বছৰৰ ছিকিউৰিটি অভিজ্ঞতা বাধ্যতামূলক।
+              </p>
+            ) : (
+              <p className="text-[11px] text-emerald-700 mt-1 font-medium">
+                গাৰ্ড পদৰ বাবে ০ বছৰৰ পৰা (নতুন/Fresher) সকলোৱে আবেদন কৰিব পাৰিব।
+              </p>
+            )}
           </div>
 
           {/* Ex-Servicemen Status */}

@@ -54,8 +54,11 @@ export const PositionSalarySelector: React.FC<PositionSalarySelectorProps> = ({
                 <h3 className="text-base font-bold text-slate-900">
                   Security Supervisor
                 </h3>
-                <span className="text-xs text-sky-800 font-semibold">
+                <span className="text-xs text-sky-800 font-semibold block">
                   Officer / Supervisory Grade
+                </span>
+                <span className="inline-block mt-0.5 text-[10px] font-extrabold bg-blue-100 text-blue-900 px-2 py-0.5 rounded">
+                  Male Only · Min 3 Yrs Exp · Age 18-40
                 </span>
               </div>
             </div>
@@ -87,6 +90,18 @@ export const PositionSalarySelector: React.FC<PositionSalarySelectorProps> = ({
           </div>
 
           <div className="mt-3 space-y-1.5 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5 text-blue-900 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-700"></span>
+              <span>প্ৰাৰ্থী: কেৱল পুৰুষ প্ৰাৰ্থী (Only Male Candidates)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-amber-900 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+              <span>অভিজ্ঞতা: কমেও ৩ বছৰ (Minimum 3 Years Experience)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+              <span>বয়সৰ সীমা: ১৮ ৰ পৰা ৪০ বছৰ (Age: 18 - 40 Years)</span>
+            </div>
             <div className="flex items-center gap-1.5 text-slate-700 font-medium">
               <span className="w-1.5 h-1.5 rounded-full bg-sky-700"></span>
               <span>Driving License mandatory for this role</span>
@@ -122,8 +137,11 @@ export const PositionSalarySelector: React.FC<PositionSalarySelectorProps> = ({
                 <h3 className="text-base font-bold text-slate-900">
                   Unarmed Security Guard
                 </h3>
-                <span className="text-xs text-emerald-800 font-semibold">
+                <span className="text-xs text-emerald-800 font-semibold block">
                   Field Guarding Grade
+                </span>
+                <span className="inline-block mt-0.5 text-[10px] font-extrabold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded">
+                  Male & Female · 0+ Yrs Exp · Age 18-40
                 </span>
               </div>
             </div>
@@ -155,8 +173,20 @@ export const PositionSalarySelector: React.FC<PositionSalarySelectorProps> = ({
           </div>
 
           <div className="mt-3 space-y-1.5 text-xs text-slate-600">
-            <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+            <div className="flex items-center gap-1.5 text-emerald-900 font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>
+              <span>প্ৰাৰ্থী: মহিলা আৰু পুৰুষ উভয়ে আবেদন কৰিব পাৰিব (Male & Female)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-emerald-900 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-700"></span>
+              <span>অভিজ্ঞতা: ০ বছৰৰ পৰা (0+ Years / Freshers Welcome)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+              <span>বয়সৰ সীমা: ১৮ ৰ পৰা ৪০ বছৰ (Age: 18 - 40 Years)</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-slate-700 font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
               <span>Open to 10th Pass candidates with good physical fitness</span>
             </div>
             <div className="flex items-center gap-1.5 text-slate-500">
