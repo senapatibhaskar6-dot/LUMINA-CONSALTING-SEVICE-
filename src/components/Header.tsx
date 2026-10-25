@@ -35,9 +35,14 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main Navigation Bar */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-3 sm:gap-6">
-        {/* Brand Zone */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-white p-0.5 border border-slate-200 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+        {/* Brand Zone (Click to go to Main Menu / Home) */}
+        <button
+          type="button"
+          onClick={() => setActiveTab('register')}
+          className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer group hover:opacity-90 transition-opacity"
+          title="Return to Main Application Menu"
+        >
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-white p-0.5 border border-slate-200 group-hover:border-sky-700 flex items-center justify-center shrink-0 shadow-2xs overflow-hidden transition-colors">
             <img
               src={LUMINA_LOGO_FALLBACK}
               alt="Lumina Business Consulting Services Logo"
@@ -46,14 +51,14 @@ export const Header: React.FC<HeaderProps> = ({
             />
           </div>
           <div className="min-w-0">
-            <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 tracking-tight leading-tight truncate">
+            <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 tracking-tight leading-tight truncate group-hover:text-sky-900 transition-colors">
               {AGENCY_NAME}
             </div>
             <div className="text-[11px] sm:text-xs text-slate-600 font-semibold truncate">
               Security Agency Interview · {INSTITUTION_NAME}
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Navigation Links */}
         <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-600">
@@ -61,18 +66,18 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setActiveTab('register')}
             className={`whitespace-nowrap transition-colors py-1 cursor-pointer ${
               activeTab === 'register'
-                ? 'text-sky-900 border-b-2 border-sky-800 font-semibold'
+                ? 'text-sky-900 border-b-2 border-sky-800 font-bold'
                 : 'hover:text-slate-900'
             }`}
           >
-            New Application
+            মূল মেনু / Home (Apply)
           </button>
           
           <button
             onClick={() => setActiveTab('bidInfo')}
             className={`whitespace-nowrap transition-colors py-1 cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'bidInfo'
-                ? 'text-sky-900 border-b-2 border-sky-800 font-semibold'
+                ? 'text-sky-900 border-b-2 border-sky-800 font-bold'
                 : 'hover:text-slate-900'
             }`}
           >
@@ -85,12 +90,12 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => setActiveTab('receipt')}
               className={`whitespace-nowrap transition-colors py-1 cursor-pointer flex items-center gap-1.5 ${
                 activeTab === 'receipt'
-                  ? 'text-sky-900 border-b-2 border-sky-800 font-semibold'
+                  ? 'text-sky-900 border-b-2 border-sky-800 font-bold'
                 : 'hover:text-slate-900'
               }`}
             >
               <FileText className="w-4 h-4" />
-              <span>Current Receipt</span>
+              <span>Current Receipt (ৰচিদ)</span>
             </button>
           )}
         </nav>

@@ -39,7 +39,8 @@ import {
   ExternalLink,
   Users,
   Clock,
-  BarChart3
+  BarChart3,
+  Home
 } from 'lucide-react';
 
 const STORAGE_KEY = 'bmch_security_registrations_2026';
@@ -289,7 +290,15 @@ export default function App() {
             <PaymentReceipt
               record={currentRecord}
               onOpenSms={() => setIsSmsModalOpen(true)}
-              onNewRegistration={() => setActiveTab('register')}
+              onNewRegistration={() => {
+                setPendingFormData(null);
+                setActiveTab('register');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onBackToHome={() => {
+                setActiveTab('register');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
             />
           ) : (
             <div className="bg-white rounded-2xl p-6 sm:p-12 border border-slate-200 text-center max-w-xl mx-auto shadow-xs space-y-4">
@@ -344,6 +353,13 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button
+              onClick={() => setActiveTab('register')}
+              className="text-sky-900 hover:underline font-semibold cursor-pointer"
+            >
+              মূল মেনু / Home
+            </button>
+            <span>·</span>
+            <button
               onClick={() => setIsTrackerOpen(true)}
               className="text-sky-900 hover:underline font-semibold cursor-pointer"
             >
@@ -354,14 +370,7 @@ export default function App() {
               onClick={() => setIsBidDetailsOpen(true)}
               className="text-sky-900 hover:underline font-medium cursor-pointer"
             >
-              GeM Terms & Conditions
-            </button>
-            <span>·</span>
-            <button
-              onClick={() => setIsLookupModalOpen(true)}
-              className="text-sky-900 hover:underline font-medium cursor-pointer"
-            >
-              Receipt Portal
+              GeM Terms
             </button>
           </div>
         </div>
@@ -372,13 +381,16 @@ export default function App() {
         <div className="grid grid-cols-4 items-center h-14">
           <button
             type="button"
-            onClick={() => setActiveTab('register')}
+            onClick={() => {
+              setActiveTab('register');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
             className={`flex flex-col items-center justify-center h-full min-h-[44px] cursor-pointer touch-manipulation transition-colors ${
               activeTab === 'register' ? 'text-sky-900 font-bold' : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <FileText className={`w-5 h-5 ${activeTab === 'register' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            <span className="text-[10px] font-medium tracking-tight mt-0.5">Apply</span>
+            <Home className={`w-5 h-5 ${activeTab === 'register' ? 'stroke-[2.5]' : 'stroke-2'}`} />
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">মূল পৃষ্ঠা</span>
           </button>
 
           <button
@@ -386,6 +398,7 @@ export default function App() {
             onClick={() => {
               if (currentRecord) {
                 setActiveTab('receipt');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               } else {
                 setIsLookupModalOpen(true);
               }
@@ -395,7 +408,7 @@ export default function App() {
             }`}
           >
             <FileCheck className={`w-5 h-5 ${activeTab === 'receipt' ? 'stroke-[2.5]' : 'stroke-2'}`} />
-            <span className="text-[10px] font-medium tracking-tight mt-0.5">Receipt</span>
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">ৰচিদ</span>
           </button>
 
           <button
@@ -409,7 +422,7 @@ export default function App() {
                 {allRecords.length}
               </span>
             </div>
-            <span className="text-[10px] font-medium tracking-tight mt-0.5">Tracker</span>
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">ট্ৰেক ৰেকৰ্ড</span>
           </button>
 
           <button
@@ -418,7 +431,7 @@ export default function App() {
             className="flex flex-col items-center justify-center h-full min-h-[44px] text-slate-500 hover:text-slate-800 cursor-pointer touch-manipulation transition-colors"
           >
             <Search className="w-5 h-5 stroke-2" />
-            <span className="text-[10px] font-medium tracking-tight mt-0.5">Search</span>
+            <span className="text-[10px] font-medium tracking-tight mt-0.5">সন্ধান</span>
           </button>
         </div>
       </nav>
@@ -439,6 +452,10 @@ export default function App() {
           record={currentRecord}
           isOpen={isSmsModalOpen}
           onClose={() => setIsSmsModalOpen(false)}
+          onBackToHome={() => {
+            setActiveTab('register');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
           onResendSms={() => {
             // Show temporary status
           }}

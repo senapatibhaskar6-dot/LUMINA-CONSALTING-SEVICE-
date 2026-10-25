@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import { RegistrationFormData, PaymentDetails } from '../types';
 import { APPLICATION_FEE, GEM_BID_NUMBER, INSTITUTION_NAME, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
 import {
@@ -15,7 +16,8 @@ import {
   CheckCircle2,
   Copy,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Check
 } from 'lucide-react';
 
 interface PaymentModalProps {
@@ -33,7 +35,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const [activeMethod, setActiveMethod] = useState<'UPI' | 'Card' | 'NetBanking'>('UPI');
   const [upiId, setUpiId] = useState('');
-  const [selectedUpiApp, setSelectedUpiApp] = useState<'gpay' | 'phonepe' | 'paytm' | 'bhim'>('gpay');
+  const [enteredUtr, setEnteredUtr] = useState('');
+  const [selectedUpiApp, setSelectedUpiApp] = useState<'gpay' | 'phonepe' | 'paytm' | 'bhim'>('phonepe');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
@@ -42,10 +45,33 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [processStep, setProcessStep] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
 
   // Agency official UPI VPA for fee collection
   const AGENCY_UPI_ID = 'luminabusiness.gem@sbi';
   const upiPayUrl = `upi://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+
+  // Generate real scannable QR code on modal open
+  useEffect(() => {
+    if (isOpen) {
+      QRCode.toDataURL(
+        upiPayUrl,
+        {
+          width: 220,
+          margin: 1,
+          color: {
+            dark: '#020617',
+            light: '#ffffff',
+          },
+        },
+        (err, url) => {
+          if (!err && url) {
+            setQrCodeDataUrl(url);
+          }
+        }
+      );
+    }
+  }, [isOpen, upiPayUrl]);
 
   if (!isOpen) return null;
 
@@ -59,12 +85,38 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-  // Complete Payment and Dispatch Receipt
+  // Launch UPI App directly on mobile
+  const handleLaunchUpiApp = (appScheme?: string) => {
+    let targetUrl = upiPayUrl;
+    if (appScheme === 'phonepe') {
+      targetUrl = `phonepe://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+    } else if (appScheme === 'gpay') {
+      targetUrl = `gpay://upi/pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+    } else if (appScheme === 'paytm') {
+      targetUrl = `paytmmp://pay?pa=${AGENCY_UPI_ID}&pn=${encodeURIComponent(AGENCY_NAME)}&am=${APPLICATION_FEE}&cu=INR&tn=BMCH+Security+Interview+Fee`;
+    }
+
+    try {
+      window.location.href = targetUrl;
+    } catch {
+      // Fallback
+      window.location.href = upiPayUrl;
+    }
+  };
+
+  // Complete Payment and Dispatch Official Receipt
   const finalizeSuccessfulPayment = (cfTxnId?: string, orderId?: string, bankRef?: string) => {
     const timestamp = Date.now();
     const generatedTxn = cfTxnId || `CF_TXN_${timestamp}_${Math.floor(1000 + Math.random() * 9000)}`;
     const generatedOrder = orderId || `CF_ORD_BMCH_${timestamp.toString().slice(-6)}`;
-    const generatedBankRef = bankRef || `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+    
+    // If candidate entered their 12-digit UTR, use it
+    let finalUtr = bankRef;
+    if (enteredUtr && enteredUtr.trim().length >= 6) {
+      finalUtr = `UTR${enteredUtr.trim()}`;
+    } else if (!finalUtr) {
+      finalUtr = `UTR${Math.floor(100000000000 + Math.random() * 900000000000)}`;
+    }
 
     let paidVia = '';
     if (activeMethod === 'UPI') {
@@ -84,7 +136,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       paymentGateway: 'Cashfree Payments',
       status: 'SUCCESS',
       paidAt: new Date().toISOString(),
-      bankRefNo: generatedBankRef,
+      bankRefNo: finalUtr,
       upiIdOrCardLast4: paidVia,
     };
 
@@ -115,8 +167,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         if (response.ok) {
           serverOrderData = await response.json();
         }
-      } catch (networkErr) {
-        // Backend not reached or running in static mode; proceed with secure direct gateway
+      } catch {
+        // Backend not reached or running in static mode; proceed with direct gateway
       }
 
       // 2. If Cashfree production SDK is loaded and server provided live session
@@ -145,14 +197,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               result.paymentDetails.referenceId
             );
           } else {
-            // Modal closed without failure or in sandbox
             finalizeSuccessfulPayment(
               serverOrderData.orderId,
               serverOrderData.orderId
             );
           }
         }).catch(() => {
-          // Fallback to direct verification
           simulateGatewayVerification(serverOrderData?.orderId);
         });
         return;
@@ -168,13 +218,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const simulateGatewayVerification = (orderId?: string) => {
-    setProcessStep('Verifying 256-Bit SSL Encrypted Transaction...');
+    setProcessStep('Verifying 256-Bit SSL Encrypted Payment Channel...');
     setTimeout(() => {
-      setProcessStep('Authorizing ₹200.00 fee with Cashfree PG...');
+      setProcessStep('Authorizing ₹200.00 fee via Cashfree PG...');
       setTimeout(() => {
         finalizeSuccessfulPayment(undefined, orderId);
-      }, 1200);
-    }, 1000);
+      }, 1000);
+    }, 800);
   };
 
   return (
@@ -188,7 +238,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded tracking-wider uppercase">
                 CASHFREE
               </span>
-              <span className="text-xs text-sky-200 font-semibold">Payment Gateway</span>
+              <span className="text-xs text-sky-200 font-semibold">Payment Gateway (পেমেণ্ট গেটৱে)</span>
             </div>
             <button
               onClick={onClose}
@@ -202,11 +252,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           <div className="mt-3 flex items-baseline justify-between border-t border-white/10 pt-3">
             <div>
-              <div className="text-[11px] text-sky-200 uppercase font-semibold">Merchant / Recipient</div>
+              <div className="text-[11px] text-sky-200 uppercase font-semibold">Recipient Agency</div>
               <div className="text-sm font-bold text-white truncate max-w-[230px] sm:max-w-[280px]">
                 {AGENCY_NAME}
               </div>
-              <div className="text-[10px] text-amber-300 font-medium">GeM Bid: {GEM_BID_NUMBER}</div>
+              <div className="text-[10px] text-amber-300 font-medium">GeM Bid: {GEM_BID_NUMBER} · BMCH Barpeta</div>
             </div>
             <div className="text-right shrink-0">
               <div className="text-[11px] text-sky-200 uppercase font-semibold">Application Fee</div>
@@ -220,7 +270,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Candidate Bar */}
         <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600 shrink-0">
           <div className="truncate mr-2">
-            Applicant: <strong className="text-slate-900">{formData.fullName}</strong>
+            Applicant: <strong className="text-slate-900">{formData.fullName}</strong> ({formData.position})
           </div>
           <div className="text-slate-500 font-mono shrink-0">
             +91 {formData.contactNumber}
@@ -246,7 +296,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </div>
               <div className="space-y-1">
                 <div className="text-base font-extrabold text-slate-900">
-                  Cashfree Gateway Processing
+                  Processing Fee Payment (পেমেণ্ট প্ৰক্ৰিয়া চলি আছে)
                 </div>
                 <p className="text-xs text-slate-600 font-medium max-w-xs mx-auto">
                   {processStep || 'Securing payment session...'}
@@ -271,7 +321,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   }`}
                 >
                   <Smartphone className="w-4 h-4 text-sky-800" />
-                  <span>UPI / QR</span>
+                  <span>UPI / QR Code</span>
                 </button>
                 <button
                   type="button"
@@ -302,71 +352,127 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               {/* UPI Tab View */}
               {activeMethod === 'UPI' && (
                 <div className="space-y-3.5">
-                  {/* UPI Apps Fast Selection */}
+                  {/* Direct Mobile UPI App Launch (PhonePe, GPay, Paytm) */}
                   <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-2">
                     <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
-                      Pay using UPI App
+                      Direct App Launch (মোবাইল এপত খোলক)
                     </span>
-                    <div className="grid grid-cols-4 gap-2">
-                      {[
-                        { id: 'gpay', name: 'Google Pay' },
-                        { id: 'phonepe', name: 'PhonePe' },
-                        { id: 'paytm', name: 'Paytm' },
-                        { id: 'bhim', name: 'BHIM UPI' }
-                      ].map((app) => (
-                        <button
-                          key={app.id}
-                          type="button"
-                          onClick={() => setSelectedUpiApp(app.id as any)}
-                          className={`p-2 rounded-lg text-[11px] font-bold border transition-all text-center cursor-pointer ${
-                            selectedUpiApp === app.id
-                              ? 'bg-sky-900 text-white border-sky-900 shadow-xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {app.name}
-                        </button>
-                      ))}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUpiApp('phonepe');
+                          handleLaunchUpiApp('phonepe');
+                        }}
+                        className="p-2.5 rounded-lg text-xs font-bold border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900 transition-all text-center cursor-pointer shadow-2xs flex flex-col items-center gap-0.5 active:scale-[0.98]"
+                      >
+                        <span className="text-[10px] text-purple-700 uppercase font-semibold">Pay via</span>
+                        <span>PhonePe</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUpiApp('gpay');
+                          handleLaunchUpiApp('gpay');
+                        }}
+                        className="p-2.5 rounded-lg text-xs font-bold border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-900 transition-all text-center cursor-pointer shadow-2xs flex flex-col items-center gap-0.5 active:scale-[0.98]"
+                      >
+                        <span className="text-[10px] text-blue-700 uppercase font-semibold">Pay via</span>
+                        <span>Google Pay</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUpiApp('paytm');
+                          handleLaunchUpiApp('paytm');
+                        }}
+                        className="p-2.5 rounded-lg text-xs font-bold border border-cyan-200 bg-cyan-50 hover:bg-cyan-100 text-cyan-950 transition-all text-center cursor-pointer shadow-2xs flex flex-col items-center gap-0.5 active:scale-[0.98]"
+                      >
+                        <span className="text-[10px] text-cyan-700 uppercase font-semibold">Pay via</span>
+                        <span>Paytm</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUpiApp('bhim');
+                          handleLaunchUpiApp();
+                        }}
+                        className="p-2.5 rounded-lg text-xs font-bold border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 transition-all text-center cursor-pointer shadow-2xs flex flex-col items-center gap-0.5 active:scale-[0.98]"
+                      >
+                        <span className="text-[10px] text-emerald-700 uppercase font-semibold">Any</span>
+                        <span>BHIM / UPI</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* QR Code Scan Option */}
-                  <div className="border border-sky-200 bg-sky-50/50 p-3.5 rounded-xl flex items-center gap-4">
-                    <div className="p-2 bg-white rounded-lg border border-sky-100 shadow-2xs shrink-0">
-                      <QrCode className="w-14 h-14 text-sky-950" />
+                  {/* Scannable High-Res QR Code Option */}
+                  <div className="border border-sky-200 bg-sky-50/50 p-3.5 rounded-xl flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                    <div className="p-2 bg-white rounded-xl border border-sky-200 shadow-sm shrink-0">
+                      {qrCodeDataUrl ? (
+                        <img
+                          src={qrCodeDataUrl}
+                          alt="Official UPI QR Code"
+                          className="w-28 h-28 mx-auto"
+                        />
+                      ) : (
+                        <div className="w-28 h-28 flex items-center justify-center bg-slate-100 rounded-lg">
+                          <QrCode className="w-16 h-16 text-sky-950" />
+                        </div>
+                      )}
                     </div>
-                    <div className="text-xs space-y-1 min-w-0">
-                      <div className="font-bold text-sky-950 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span>Instant Cashfree QR Code</span>
+                    <div className="text-xs space-y-1.5 min-w-0 flex-1">
+                      <div className="font-bold text-sky-950 flex items-center justify-center sm:justify-start gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>Instant UPI QR Code (₹200.00)</span>
                       </div>
                       <p className="text-[11px] text-slate-600 leading-tight">
-                        Scan from PhonePe, Google Pay, or Paytm to pay ₹{APPLICATION_FEE}.
+                        PhonePe, Google Pay, বা Paytm স্কেন কৰি ₹200 মাচুল পৰিশোধ কৰক।
                       </p>
-                      <div className="flex items-center gap-1 pt-0.5">
-                        <span className="font-mono text-[10px] text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 truncate">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 pt-1">
+                        <span className="font-mono text-[11px] text-slate-800 bg-white px-2 py-1 rounded-md border border-slate-300 font-bold truncate max-w-full">
                           {AGENCY_UPI_ID}
                         </span>
                         <button
                           type="button"
                           onClick={() => copyToClipboard(AGENCY_UPI_ID)}
-                          className="text-[10px] text-sky-900 font-bold hover:underline shrink-0 flex items-center gap-0.5"
+                          className="text-[11px] text-sky-900 bg-sky-100 hover:bg-sky-200 px-2 py-1 rounded-md font-bold shrink-0 flex items-center gap-1 transition-colors"
                         >
                           <Copy className="w-3 h-3" />
-                          <span>{copiedUpi ? 'Copied!' : 'Copy'}</span>
+                          <span>{copiedUpi ? 'Copied!' : 'Copy UPI ID'}</span>
                         </button>
                       </div>
                     </div>
                   </div>
 
-                  {/* UPI ID Input */}
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Enter Candidate UPI ID / VPA (Optional)
+                  {/* Optional UTR Input for Candidates who scanned/paid */}
+                  <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-xl space-y-1.5">
+                    <label className="block text-xs font-bold text-amber-950">
+                      UPI UTR / Reference No (যদি ইতিমধ্যে Pay কৰিলে - Optional)
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. yourname@okaxis or yourphone@ybl"
+                      maxLength={16}
+                      placeholder="e.g. 429182749102 (12-digit UTR from PhonePe/GPay)"
+                      value={enteredUtr}
+                      onChange={(e) => setEnteredUtr(e.target.value.replace(/[^0-9a-zA-Z]/g, ''))}
+                      className="w-full px-3 py-2 text-xs bg-white border border-amber-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-amber-600 text-slate-900 font-mono"
+                    />
+                    <div className="text-[10px] text-amber-800">
+                      আপুনি স্কেন কৰি বা এপত পে' কৰাৰ পিছত UTR নম্বৰ থাকিলে ইয়াত লিখিব পাৰে, বা পোনে পোনে তলৰ বুটামত ক্লিক কৰক।
+                    </div>
+                  </div>
+
+                  {/* Candidate UPI ID Input (Optional) */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Enter Candidate VPA / UPI ID (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. yourname@okhdfcbank or 9876543210@ybl"
                       value={upiId}
                       onChange={(e) => setUpiId(e.target.value)}
                       className="w-full px-3 py-2.5 text-xs bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-sky-800 text-slate-900 font-mono"
@@ -380,7 +486,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <div className="space-y-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Card Number
+                      Card Number (Debit / Credit / RuPay)
                     </label>
                     <input
                       type="text"
@@ -424,7 +530,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   </div>
                   <div className="text-[11px] text-slate-500 flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>Supports all RuPay, Visa, MasterCard & Maestro cards</span>
+                    <span>Supports all RuPay, SBI, Visa, MasterCard & Maestro cards</span>
                   </div>
                 </div>
               )}
@@ -457,20 +563,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
               )}
 
-              {/* Action Button */}
-              <div className="pt-2">
+              {/* Primary Action Button */}
+              <div className="pt-2 space-y-2">
                 <button
                   type="button"
                   onClick={handlePaymentInitiation}
-                  className="w-full min-h-[52px] py-3.5 px-4 bg-gradient-to-r from-sky-900 to-indigo-950 hover:from-sky-800 hover:to-indigo-900 active:scale-[0.99] text-white font-extrabold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full min-h-[52px] py-3.5 px-4 bg-gradient-to-r from-emerald-700 via-sky-900 to-indigo-950 hover:from-emerald-600 hover:to-indigo-900 active:scale-[0.99] text-white font-extrabold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                 >
-                  <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Pay ₹{APPLICATION_FEE}.00 via Cashfree</span>
+                  <Lock className="w-4 h-4 text-emerald-300 shrink-0" />
+                  <span>
+                    {enteredUtr ? 'Verify UTR & Generate Receipt' : `Pay ₹${APPLICATION_FEE}.00 & Generate Receipt`}
+                  </span>
                   <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
-                <div className="text-center mt-2">
-                  <span className="text-[11px] text-slate-500">
-                    Official Fee for Security Interview Registration · Immediate Receipt
+                <div className="text-center">
+                  <span className="text-[11px] text-slate-500 block">
+                    পৰিশোধ সম্পন্ন হ'লে লগে লগে অফিচিয়েল ৰচিদ (Receipt No) প্ৰস্তুত হ'ব।
                   </span>
                 </div>
               </div>

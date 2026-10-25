@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 import { ApplicationRecord } from '../types';
 import { INSTITUTION_FULL_NAME, INSTITUTION_NAME, GEM_BID_NUMBER, SALARY_MATRIX, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
 import {
@@ -14,71 +15,130 @@ import {
   ArrowLeft,
   FileCheck2,
   IndianRupee,
-  Hash
+  Hash,
+  Home,
+  UserPlus
 } from 'lucide-react';
 
 interface PaymentReceiptProps {
   record: ApplicationRecord;
   onOpenSms: () => void;
   onNewRegistration: () => void;
+  onBackToHome?: () => void;
 }
 
 export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
   record,
   onOpenSms,
   onNewRegistration,
+  onBackToHome,
 }) => {
   const { formData, payment, registrationId, createdAt } = record;
+  const [verificationQrUrl, setVerificationQrUrl] = useState<string>('');
+
   // Official Receipt Number formatting
   const receiptNo = record.receiptNumber || `BMCH-REC-2026-${registrationId.replace(/[^0-9]/g, '').slice(-5) || '10294'}`;
   const salaryInfo = SALARY_MATRIX[formData.position];
+
+  // Generate authentic verification QR code for this candidate's receipt
+  useEffect(() => {
+    const verificationPayload = `BMCH-SECURITY-RECRUITMENT\nReceipt: ${receiptNo}\nRegId: ${registrationId}\nCandidate: ${formData.fullName}\nPost: ${formData.position}\nPhone: ${formData.contactNumber}\nFee: Rs. 200 (PAID)\nTxn: ${payment.transactionId}\nAgency: ${AGENCY_NAME}\nGeM: ${GEM_BID_NUMBER}`;
+    QRCode.toDataURL(
+      verificationPayload,
+      {
+        width: 180,
+        margin: 1,
+        color: { dark: '#0f172a', light: '#ffffff' },
+      },
+      (err, url) => {
+        if (!err && url) {
+          setVerificationQrUrl(url);
+        }
+      }
+    );
+  }, [receiptNo, registrationId, formData, payment]);
 
   const handlePrint = () => {
     window.print();
   };
 
+  const handleReturnToHome = () => {
+    if (onBackToHome) {
+      onBackToHome();
+    } else {
+      onNewRegistration();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Action Bar (hidden in print) */}
-      <div className="no-print bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <button
-          onClick={onNewRegistration}
-          className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center justify-center sm:justify-start gap-1.5 transition-colors cursor-pointer min-h-[44px] py-2 px-3 rounded-lg hover:bg-slate-50"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Register Another Candidate</span>
-        </button>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+      <div className="no-print bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Main Menu / Home Button */}
+        <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={onOpenSms}
-            className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-semibold text-sky-900 bg-sky-50 hover:bg-sky-100 active:bg-sky-200 border border-sky-200 rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+            type="button"
+            onClick={handleReturnToHome}
+            className="flex-1 sm:flex-none text-xs font-bold text-sky-950 bg-sky-100 hover:bg-sky-200 active:scale-[0.98] flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[44px] py-2.5 px-4 rounded-xl border border-sky-300"
+            title="Return to Portal Home & Main Application Menu"
           >
-            <MessageSquare className="w-4 h-4 text-sky-700" />
-            <span>View Sent SMS Alert</span>
+            <Home className="w-4 h-4 text-sky-900" />
+            <span>← মূল মেনু / Home (Main Menu)</span>
           </button>
 
           <button
-            onClick={handlePrint}
-            className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-bold text-white bg-sky-900 hover:bg-sky-800 active:scale-[0.98] rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+            type="button"
+            onClick={onNewRegistration}
+            className="flex-1 sm:flex-none text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 active:scale-[0.98] flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[44px] py-2.5 px-3.5 rounded-xl border border-slate-200"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print / Save as PDF</span>
+            <UserPlus className="w-4 h-4 text-slate-600" />
+            <span>নতুন আবেদন (New Registration)</span>
+          </button>
+        </div>
+
+        {/* SMS and Print Buttons */}
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenSms}
+            className="w-full sm:w-auto px-3.5 py-2.5 min-h-[44px] text-xs font-semibold text-sky-900 bg-white hover:bg-sky-50 active:bg-sky-100 border border-sky-200 rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
+          >
+            <MessageSquare className="w-4 h-4 text-sky-700" />
+            <span>View SMS</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 active:scale-[0.98] rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
+          >
+            <Printer className="w-4 h-4 text-amber-300" />
+            <span>Print / PDF</span>
           </button>
         </div>
       </div>
 
       {/* Success Notification Banner (hidden in print) */}
-      <div className="no-print bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3">
-        <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-        <div className="text-xs space-y-1">
-          <p className="font-bold text-emerald-900">
-            Payment of Rs. 200.00 Received Successfully via Cashfree Payments
-          </p>
-          <p className="text-emerald-700">
-            Official Receipt Number: <strong className="font-mono text-emerald-950">{receiptNo}</strong>. Registration has been recorded in the BMCH recruitment roster. A confirmation SMS has been dispatched to <strong>+91 {formData.contactNumber}</strong>.
-          </p>
+      <div className="no-print bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="text-xs space-y-1">
+            <p className="font-bold text-emerald-900 text-sm">
+              Payment of Rs. 200.00 Received Successfully via Cashfree Payments
+            </p>
+            <p className="text-emerald-800">
+              Official Receipt Number: <strong className="font-mono text-emerald-950 font-extrabold">{receiptNo}</strong>. Registration has been recorded in the recruitment roster.
+            </p>
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={handleReturnToHome}
+          className="text-xs font-bold text-emerald-900 bg-white border border-emerald-300 hover:bg-emerald-100 px-3.5 py-2 rounded-lg cursor-pointer shrink-0 transition-colors"
+        >
+          মূল মেনুলৈ যাওক (Go to Home) →
+        </button>
       </div>
 
       {/* THE OFFICIAL PRINTABLE RECEIPT */}
@@ -355,8 +415,12 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
           <div className="pt-4 border-t border-slate-300 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-slate-600">
             {/* QR Code */}
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-white border border-slate-300 rounded-lg shadow-2xs">
-                <QrCode className="w-14 h-14 text-slate-900" />
+              <div className="p-1.5 bg-white border border-slate-300 rounded-lg shadow-2xs shrink-0">
+                {verificationQrUrl ? (
+                  <img src={verificationQrUrl} alt="Receipt Verification QR" className="w-16 h-16" />
+                ) : (
+                  <QrCode className="w-16 h-16 text-slate-900" />
+                )}
               </div>
               <div className="space-y-0.5">
                 <div className="font-bold text-slate-900">Digital Authenticity QR</div>
@@ -386,6 +450,38 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
           <div className="pt-2 text-center text-[10px] text-slate-400 border-t border-slate-200">
             Note: This is an official system-generated registration receipt (Receipt No: {receiptNo}) issued by {AGENCY_NAME} under GeM Bid {GEM_BID_NUMBER} for deployment at {INSTITUTION_NAME}. Please preserve this receipt carefully. You must produce this receipt and original Aadhaar / Driving License at the time of interview.
           </div>
+        </div>
+      </div>
+
+      {/* PROMINENT BOTTOM NAVIGATION BAR (User Request: Returning to Main Menu) */}
+      <div className="no-print bg-white p-4 sm:p-5 rounded-2xl border-2 border-sky-900/20 shadow-md flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+        <div>
+          <div className="text-sm font-extrabold text-slate-900">
+            আপোনাৰ কাম সম্পূৰ্ণ হ'লনে? (Finished Viewing Receipt?)
+          </div>
+          <div className="text-xs text-slate-600">
+            Click below to return to the Main Menu (Home) or register another applicant.
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2.5 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={handleReturnToHome}
+            className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-gradient-to-r from-sky-900 to-indigo-950 hover:from-sky-800 hover:to-indigo-900 active:scale-[0.98] text-white font-extrabold rounded-xl text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
+          >
+            <Home className="w-4 h-4 text-amber-300" />
+            <span>← মূল পৃষ্ঠালৈ ঘূৰি যাওক (Back to Main Menu)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onNewRegistration}
+            className="w-full sm:w-auto min-h-[48px] px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-all border border-slate-300 flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
+          >
+            <UserPlus className="w-4 h-4 text-slate-700" />
+            <span>নতুন আবেদন (New Registration)</span>
+          </button>
         </div>
       </div>
     </div>
