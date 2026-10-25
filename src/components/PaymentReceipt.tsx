@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { ApplicationRecord } from '../types';
-import { INSTITUTION_FULL_NAME, INSTITUTION_NAME, GEM_BID_NUMBER, SALARY_MATRIX, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
+import { INSTITUTION_FULL_NAME, INSTITUTION_NAME, GEM_BID_NUMBER, SALARY_MATRIX, AGENCY_NAME, AGENCY_ADDRESS, REGISTRATION_LAST_DATE } from '../data/assamDistricts';
 import {
   Printer,
   Download,
@@ -255,6 +255,12 @@ export const PaymentReceipt: React.FC<PaymentReceiptProps> = ({
                 <CheckCircle2 className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
                 <span>
                   Please bring this original payment receipt (Receipt No: <strong>{receiptNo}</strong>) along with you on the day of the interview.
+                </span>
+              </div>
+              <div className="flex items-start gap-2 bg-white/80 p-2.5 rounded-lg border border-amber-200">
+                <CheckCircle2 className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                <span>
+                  Application Registration Last Date: <strong>{REGISTRATION_LAST_DATE}</strong>. Interview calls will be scheduled strictly for valid candidates registered on or before {REGISTRATION_LAST_DATE}.
                 </span>
               </div>
             </div>

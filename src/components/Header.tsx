@@ -1,7 +1,7 @@
 import React from 'react';
-import { GEM_BID_NUMBER, INSTITUTION_NAME, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
+import { GEM_BID_NUMBER, INSTITUTION_NAME, AGENCY_NAME, AGENCY_ADDRESS, REGISTRATION_LAST_DATE } from '../data/assamDistricts';
 import { LUMINA_LOGO_FALLBACK } from '../data/logoData';
-import { FileText, Search, Info, BarChart3, Users } from 'lucide-react';
+import { FileText, Search, Info, BarChart3, Users, Calendar } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: 'register' | 'receipt' | 'bidInfo';
@@ -28,8 +28,12 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
           <span className="truncate">{AGENCY_NAME} · {AGENCY_ADDRESS}</span>
         </div>
-        <div className="flex items-center gap-3 text-slate-300 shrink-0">
-          <span>GeM: <strong className="text-white font-mono">{GEM_BID_NUMBER}</strong></span>
+        <div className="flex items-center gap-2 sm:gap-3 text-slate-300 shrink-0">
+          <span className="bg-rose-600 text-white font-bold px-2 py-0.5 rounded text-[10px] sm:text-[11px] flex items-center gap-1">
+            <Calendar className="w-3 h-3 shrink-0" />
+            <span>Last Date: {REGISTRATION_LAST_DATE}</span>
+          </span>
+          <span className="hidden sm:inline">GeM: <strong className="text-white font-mono">{GEM_BID_NUMBER}</strong></span>
         </div>
       </div>
 

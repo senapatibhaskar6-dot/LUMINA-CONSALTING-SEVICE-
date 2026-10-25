@@ -21,7 +21,9 @@ import {
   SALARY_MATRIX,
   APPLICATION_FEE,
   AGENCY_NAME,
-  AGENCY_ADDRESS
+  AGENCY_ADDRESS,
+  REGISTRATION_LAST_DATE,
+  REGISTRATION_LAST_DATE_DISPLAY
 } from './data/assamDistricts';
 import { LUMINA_LOGO_FALLBACK } from './data/logoData';
 import {
@@ -245,6 +247,10 @@ export default function App() {
                       <span className="bg-sky-500/20 text-sky-200 border border-sky-400/30 px-2 py-0.5 rounded text-[10px] sm:text-xs">
                         Bid: {GEM_BID_NUMBER}
                       </span>
+                      <span className="bg-rose-500 text-white font-extrabold px-2.5 py-0.5 rounded text-[10px] sm:text-xs flex items-center gap-1 shadow-xs border border-rose-400">
+                        <Calendar className="w-3 h-3 text-white shrink-0" />
+                        <span>অন্তিম তাৰিখ: {REGISTRATION_LAST_DATE}</span>
+                      </span>
                     </div>
                     <div className="text-[11px] sm:text-xs text-slate-300 font-medium truncate">
                       {AGENCY_ADDRESS}
@@ -282,8 +288,8 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* Key Remuneration & Fee Strip */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-1">
+                {/* Key Remuneration, Fee & Deadline Strip */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-1">
                   <div className="bg-white/10 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border border-white/10">
                     <div className="text-xs text-sky-200 font-semibold">Security Supervisor</div>
                     <div className="text-base sm:text-lg font-bold text-white font-mono flex items-center gap-1">
@@ -305,15 +311,29 @@ export default function App() {
                     <div className="text-base sm:text-lg font-bold text-amber-300 font-mono">
                       Rs. {APPLICATION_FEE}.00
                     </div>
-                    <div className="text-[11px] text-amber-200/80">Cashfree Live Gateway / Immediate Receipt</div>
+                    <div className="text-[11px] text-amber-200/80">Cashfree Live Gateway / Receipt</div>
+                  </div>
+
+                  {/* USER REQUESTED: Registration Last Date 31/11/2026 */}
+                  <div className="bg-rose-500/25 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border-2 border-rose-400/60 shadow-xs">
+                    <div className="text-xs text-rose-200 font-extrabold flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+                      <span>Registration Last Date</span>
+                    </div>
+                    <div className="text-base sm:text-lg font-black text-white font-mono tracking-wider">
+                      {REGISTRATION_LAST_DATE}
+                    </div>
+                    <div className="text-[11px] text-rose-200 font-medium">
+                      আবেদনৰ শেষ তাৰিখ: ৩১/১১/২০২৬
+                    </div>
                   </div>
                 </div>
 
-                {/* Interview Notice */}
+                {/* Interview & Last Date Notice */}
                 <div className="bg-amber-400/15 border border-amber-400/40 p-3 sm:p-3.5 rounded-xl flex items-start sm:items-center gap-2.5 text-xs text-amber-100 font-medium">
                   <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5 sm:mt-0" />
                   <span className="leading-relaxed">
-                    <strong>Notice:</strong> This form is strictly for the Security Agency Interview. Interview date and details will be communicated soon to your provided phone number. Please retain your Official Receipt Number.
+                    <strong>Notice:</strong> This form is strictly for the Security Agency Interview. Candidate Registration Last Date is <strong className="text-amber-300 underline underline-offset-2">{REGISTRATION_LAST_DATE}</strong>. Interview date and details will be communicated soon to your registered phone number.
                   </span>
                 </div>
               </div>

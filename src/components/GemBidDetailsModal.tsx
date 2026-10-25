@@ -1,6 +1,6 @@
 import React from 'react';
-import { GEM_BID_NUMBER, INSTITUTION_NAME, INSTITUTION_FULL_NAME, SALARY_MATRIX, APPLICATION_FEE, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
-import { X, Shield, FileText, CheckCircle2, Building, IndianRupee, Clock, AlertCircle } from 'lucide-react';
+import { GEM_BID_NUMBER, INSTITUTION_NAME, INSTITUTION_FULL_NAME, SALARY_MATRIX, APPLICATION_FEE, AGENCY_NAME, AGENCY_ADDRESS, REGISTRATION_LAST_DATE } from '../data/assamDistricts';
+import { X, Shield, FileText, CheckCircle2, Building, IndianRupee, Clock, AlertCircle, Calendar } from 'lucide-react';
 
 interface GemBidDetailsModalProps {
   isOpen: boolean;
@@ -45,14 +45,10 @@ export const GemBidDetailsModal: React.FC<GemBidDetailsModalProps> = ({
         {/* Content */}
         <div className="p-6 space-y-6 text-xs text-slate-700 leading-relaxed max-h-[70vh] overflow-y-auto">
           {/* Key Overview */}
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
               <span className="text-slate-500 block">Service Provider:</span>
-              <span className="font-bold text-slate-900 text-xs">{AGENCY_NAME}</span>
-            </div>
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-slate-500 block">Buyer Department:</span>
-              <span className="font-bold text-slate-900 text-xs">Health & FW, Assam</span>
+              <span className="font-bold text-slate-900 text-xs truncate block">{AGENCY_NAME}</span>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
               <span className="text-slate-500 block">Deploying Hospital:</span>
@@ -60,7 +56,13 @@ export const GemBidDetailsModal: React.FC<GemBidDetailsModalProps> = ({
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
               <span className="text-slate-500 block">Application Fee:</span>
-              <span className="font-bold text-emerald-800 text-xs">Rs. {APPLICATION_FEE}.00 (Online)</span>
+              <span className="font-bold text-emerald-800 text-xs">Rs. {APPLICATION_FEE}.00</span>
+            </div>
+            <div className="p-3 bg-rose-50 border-2 border-rose-300 rounded-xl sm:col-span-2">
+              <span className="text-rose-700 font-bold block flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" /> Registration Last Date:
+              </span>
+              <span className="font-mono font-black text-rose-950 text-sm">{REGISTRATION_LAST_DATE}</span>
             </div>
           </div>
 

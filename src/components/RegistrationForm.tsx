@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { RegistrationFormData, SecurityPosition } from '../types';
-import { ASSAM_DISTRICTS, QUALIFICATIONS, APPLICATION_FEE, GEM_BID_NUMBER, AGENCY_NAME, AGENCY_ADDRESS } from '../data/assamDistricts';
+import { ASSAM_DISTRICTS, QUALIFICATIONS, APPLICATION_FEE, GEM_BID_NUMBER, AGENCY_NAME, AGENCY_ADDRESS, REGISTRATION_LAST_DATE } from '../data/assamDistricts';
 import { PositionSalarySelector } from './PositionSalarySelector';
 import {
   User,
@@ -188,6 +188,36 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-8">
+      {/* Registration Last Date Alert Banner */}
+      <div className="bg-gradient-to-r from-rose-50 via-amber-50/60 to-rose-50 border-2 border-rose-300 rounded-xl sm:rounded-2xl p-3.5 sm:p-4.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Calendar className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs sm:text-sm font-extrabold text-slate-900">
+                পঞ্জীয়নৰ শেষ তাৰিখ (Registration Last Date):
+              </span>
+              <span className="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white font-mono font-black text-xs sm:text-sm shadow-2xs">
+                {REGISTRATION_LAST_DATE}
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-slate-600 font-medium mt-0.5">
+              আবেদন প্ৰক্ৰিয়া ৩১/১১/২০২৬ তাৰিখলৈ সক্ৰিয় থাকিব। অনুগ্ৰহ কৰি অন্তিম তাৰিখৰ পূৰ্বে আবেদন জমা কৰক।
+            </p>
+          </div>
+        </div>
+
+        <div className="w-full sm:w-auto flex sm:flex-col items-center sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-rose-200">
+          <span className="text-[10px] sm:text-[11px] text-rose-700 font-bold uppercase tracking-wider">
+            Closing Date
+          </span>
+          <span className="font-mono font-black text-rose-900 text-xs sm:text-sm">
+            {REGISTRATION_LAST_DATE}
+          </span>
+        </div>
+      </div>
 
       {/* 1. Position & Salary Selection */}
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-xs">
