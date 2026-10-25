@@ -485,7 +485,7 @@ export default function App() {
       </nav>
 
       {/* Cashfree Payment Gateway Checkout Modal */}
-      {pendingFormData && (
+      {isPaymentModalOpen && pendingFormData && (
         <PaymentModal
           formData={pendingFormData}
           isOpen={isPaymentModalOpen}
@@ -495,7 +495,7 @@ export default function App() {
       )}
 
       {/* SMS Confirmation Modal / Notification Dispatch */}
-      {currentRecord && (
+      {isSmsModalOpen && currentRecord && (
         <SmsNotificationModal
           record={currentRecord}
           isOpen={isSmsModalOpen}
