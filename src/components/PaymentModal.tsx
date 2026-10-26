@@ -64,13 +64,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     return true;
   });
 
-  // Navigation / view mode: On mobile strictly 'cashfree_gateway'; on desktop/laptop/tablet default to 'upi_qr'
-  const [activeTab, setActiveTab] = useState<'upi_qr' | 'cashfree_gateway'>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      return 'cashfree_gateway';
-    }
-    return 'upi_qr';
-  });
+  // Navigation / view mode: 'upi_qr' (NEST FINDER UPI, Direct Mobile App, QR & UTR) or 'cashfree_gateway'
+  const [activeTab, setActiveTab] = useState<'upi_qr' | 'cashfree_gateway'>('upi_qr');
 
   // Cashfree Order State
   const [orderData, setOrderData] = useState<CashfreeOrderDetails | null>(null);
@@ -124,9 +119,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       const mobileView = window.innerWidth < 768;
       setIsMobile(mobileView);
       setIsDesktop(!mobileView);
-      if (mobileView) {
-        setActiveTab('cashfree_gateway');
-      }
     };
     checkDevice();
     window.addEventListener('resize', checkDevice);
@@ -318,9 +310,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       const mobileView = typeof window !== 'undefined' && window.innerWidth < 768;
       setIsMobile(mobileView);
       setIsDesktop(!mobileView);
-      // Mobile: strictly Cashfree Payment Gateway!
-      // Desktop / Laptop / Tablet: NEST FINDER UPI QR by default!
-      setActiveTab(mobileView ? 'cashfree_gateway' : 'upi_qr');
+      // Default to reliable NEST FINDER UPI / QR with GPay / PhonePe and instant UTR receipt
+      setActiveTab('upi_qr');
       setPaymentVerified(false);
       setErrorMessage(null);
       setWhitelistHelpNeeded(false);
@@ -714,94 +705,56 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         </div>
 
-        {/* Method Header or Toggle Tabs based on Device */}
-        {isMobile ? (
-          <div className="px-4 py-3 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-indigo-500/10 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow-2xs">
-                <Smartphone className="w-4 h-4" />
-              </span>
-              <div>
-                <span className="font-extrabold text-slate-900 block text-[13px]">
-                  Cashfree Official Payment Gateway
-                </span>
-                <span className="text-[10px] text-slate-600 font-medium">
-                  মোবাইল পেমেন্ট (Google Pay, PhonePe, Cards, NetBanking)
-                </span>
-              </div>
-            </div>
-            <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1 shadow-2xs">
-              <Lock className="w-3 h-3" /> Mobile
+        {/* Method Toggle Tabs (Available on Mobile, Tablet & Desktop) */}
+        <div className="px-4 pt-3 pb-1 border-b border-slate-100 flex gap-2 shrink-0 bg-slate-50/50">
+          <button
+            type="button"
+            onClick={() => setActiveTab('upi_qr')}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'upi_qr'
+                ? 'bg-sky-900 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <QrCode className="w-4 h-4 text-emerald-400" />
+            <span>UPI QR (Scan & Pay)</span>
+            <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
+              GPay / PhonePe
             </span>
-          </div>
-        ) : (
-          <div className="px-4 pt-3 pb-1 border-b border-slate-100 flex gap-2 shrink-0 bg-slate-50/50">
-            <button
-              type="button"
-              onClick={() => setActiveTab('upi_qr')}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'upi_qr'
-                  ? 'bg-sky-900 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <QrCode className="w-4 h-4 text-emerald-400" />
-              <span>NEST FINDER UPI QR (Scan & Pay)</span>
-              <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
-                GPay / PhonePe
-              </span>
-            </button>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('cashfree_gateway')}
-              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                activeTab === 'cashfree_gateway'
-                  ? 'bg-sky-900 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              <CreditCard className="w-4 h-4 text-sky-300" />
-              <span>Cashfree Official Gateway</span>
-            </button>
-          </div>
-        )}
+          <button
+            type="button"
+            onClick={() => setActiveTab('cashfree_gateway')}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'cashfree_gateway'
+                ? 'bg-sky-900 text-white shadow-xs'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <CreditCard className="w-4 h-4 text-sky-300" />
+            <span>Cashfree Official Gateway</span>
+          </button>
+        </div>
 
         {/* Modal Body */}
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
 
-          {/* Verified Channel Banner - Device Specific */}
-          {isMobile ? (
-            <div className="p-3 bg-gradient-to-r from-emerald-50 via-sky-50 to-emerald-50 border border-emerald-300 text-emerald-950 text-xs rounded-xl flex items-start gap-2.5 shadow-2xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-                  <span>Cashfree মোবাইল গেটৱে সক্ৰিয় হৈছে (Mobile Gateway Active)</span>
-                  <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded uppercase">
-                    100% Secure
-                  </span>
-                </div>
-                <p className="text-[11px] text-emerald-900 leading-relaxed">
-                  মোবাইলৰ পৰা পোনপটীয়াভাৱে <strong>Google Pay, PhonePe, Paytm, Debit Card বা Net Banking</strong> ৰ জৰিয়তে আবেদন মাচুল ₹২০০.০০ সুৰক্ষিতভাৱে পৰিশোধ কৰক।
-                </p>
+          {/* Verified Merchant Banner */}
+          <div className="p-3 bg-emerald-50/90 border border-emerald-300 text-emerald-950 text-xs rounded-xl flex items-start gap-2.5 shadow-2xs">
+            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <div className="font-bold text-emerald-950 flex items-center gap-1.5 flex-wrap">
+                <span>প্ৰতিষ্ঠানৰ সত্যায়িত মাৰ্চেণ্ট UPI সক্ৰিয় হৈছে (Verified Merchant Active)</span>
+                <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded uppercase">
+                  NEST FINDER
+                </span>
               </div>
+              <p className="text-[11px] text-emerald-900 leading-relaxed">
+                প্ৰতিষ্ঠানৰ অফিচিয়েল Axis Bank UPI ID <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950 border border-emerald-300">{merchantUpiId}</code> স্কেনাৰত সংলগ্ন কৰা হৈছে। Google Pay, PhonePe, Paytm, বা BHIM ৰে নিৰ্ভুলভাৱে পেমেন্ট কৰিব পাৰিব।
+              </p>
             </div>
-          ) : (
-            <div className="p-3 bg-emerald-50/90 border border-emerald-300 text-emerald-950 text-xs rounded-xl flex items-start gap-2.5 shadow-2xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-                  <span>প্ৰতিষ্ঠানৰ সত্যায়িত মাৰ্চেণ্ট UPI সক্ৰিয় হৈছে (Desktop / Tablet Scan & Pay)</span>
-                  <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded uppercase">
-                    NEST FINDER
-                  </span>
-                </div>
-                <p className="text-[11px] text-emerald-900 leading-relaxed">
-                  প্ৰতিষ্ঠানৰ অফিচিয়েল Axis Bank UPI ID <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950 border border-emerald-300">{merchantUpiId}</code> স্কেনাৰত সংলগ্ন কৰা হৈছে। কম্পিউটাৰ/টেবলেটৰ স্ক্ৰিনত দেখুওৱা QR ক’ডটো মোবাইলৰ Google Pay, PhonePe, Paytm, বা BHIM ৰে স্কেন কৰি পেমেন্ট কৰক।
-                </p>
-              </div>
-            </div>
-          )}
+          </div>
           
           {/* Whitelist Banner if needed */}
           {whitelistHelpNeeded && (
@@ -1324,18 +1277,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
               </div>
 
-              {!isMobile && (
-                <div className="text-center pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('upi_qr')}
-                    className="text-xs font-bold text-sky-800 hover:underline cursor-pointer flex items-center justify-center gap-1 mx-auto"
-                  >
-                    <QrCode className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>← Switch to NEST FINDER UPI QR (Scan &amp; Pay)</span>
-                  </button>
-                </div>
-              )}
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('upi_qr')}
+                  className="text-xs font-bold text-sky-800 hover:underline cursor-pointer flex items-center justify-center gap-1 mx-auto"
+                >
+                  <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>← Switch to NEST FINDER UPI QR (Scan &amp; Pay)</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
