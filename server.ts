@@ -34,10 +34,38 @@ app.get('/api/cashfree-status', (_req, res) => {
   });
 });
 
+// In-memory or env-based Merchant Business UPI ID
+const DEFAULT_MERCHANT_UPI_ID = '6913514367@okbizaxis';
+let activeMerchantUpiId = process.env.MERCHANT_UPI_ID || DEFAULT_MERCHANT_UPI_ID;
+
+// API route to get current merchant UPI configuration
+app.get('/api/merchant-upi', (_req, res) => {
+  res.json({
+    merchantUpiId: activeMerchantUpiId || DEFAULT_MERCHANT_UPI_ID,
+    agencyName: 'Lumina Consulting Services',
+    payeeName: 'NEST FINDER',
+    phone: '+91 69135 14367',
+    bank: 'Axis Bank (Google Pay Business)',
+    qrImageUrl: '/merchant-qr.jpeg',
+  });
+});
+
+// API route to update merchant UPI configuration
+app.post('/api/merchant-upi', (req, res) => {
+  const { merchantUpiId } = req.body;
+  if (typeof merchantUpiId === 'string' && merchantUpiId.trim()) {
+    activeMerchantUpiId = merchantUpiId.trim();
+  }
+  res.json({
+    success: true,
+    merchantUpiId: activeMerchantUpiId,
+  });
+});
+
 // API route for Cashfree order creation with forced UPI QR support for desktop & mobile
 app.post('/api/create-cashfree-order', async (req, res) => {
   try {
-    const { amount, customerName, customerPhone, customerEmail, returnUrl, position } = req.body;
+    const { amount, customerName, customerPhone, customerEmail, returnUrl, position, customUpiId } = req.body;
     const orderId = `LUMINA_${Date.now()}_${Math.floor(1000 + Math.random() * 9000)}`;
 
     const appId = process.env.CASHFREE_APP_ID || DEFAULT_CASHFREE_APP_ID;
@@ -58,8 +86,6 @@ app.post('/api/create-cashfree-order', async (req, res) => {
     const finalNotifyUrl = `${clientOrigin}/api/cashfree-webhook`;
 
     // Cashfree PG Order Payload
-    // By configuring order_meta.payment_methods with 'upi' first,
-    // Cashfree Drop-in Checkout renders the Dynamic UPI QR Code on desktop screens
     const cfPayload: any = {
       order_id: orderId,
       order_amount: Number(amount) || 200,
@@ -73,9 +99,7 @@ app.post('/api/create-cashfree-order', async (req, res) => {
       order_meta: {
         return_url: finalReturnUrl,
         notify_url: finalNotifyUrl,
-        // FORCING UPI ON DESKTOP & MOBILE:
-        // Cashfree checks payment_methods order; listing 'upi' first guarantees
-        // the UPI QR Code (Scan & Pay) option is enabled and prioritized on desktop checkout
+        // Prioritize UPI on Cashfree checkout
         payment_methods: 'upi,cc,dc,nb,app',
       },
       order_note: `Lumina Application Fee: ${cleanName} - Post: ${position || 'Applicant'}`,
@@ -105,6 +129,15 @@ app.post('/api/create-cashfree-order', async (req, res) => {
       });
     }
 
+    // Determine the UPI VPA to encode for on-screen scanner
+    const targetUpi = (customUpiId || activeMerchantUpiId || DEFAULT_MERCHANT_UPI_ID).trim();
+    let upiIntentUri = '';
+    if (targetUpi) {
+      const encodedAgency = encodeURIComponent('NEST FINDER');
+      const encodedNote = encodeURIComponent(`BMCH Fee ${data.order_id}`);
+      upiIntentUri = `upi://pay?pa=${encodeURIComponent(targetUpi)}&pn=${encodedAgency}&am=${data.order_amount}.00&cu=INR&tr=${data.order_id}&tn=${encodedNote}`;
+    }
+
     return res.json({
       payment_session_id: data.payment_session_id,
       orderId: data.order_id,
@@ -112,8 +145,8 @@ app.post('/api/create-cashfree-order', async (req, res) => {
       amount: data.order_amount,
       mode: env,
       isConfigured: true,
-      // UPI intent string for direct QR rendering on desktop
-      upiIntentUri: `upi://pay?pa=cashfree@icici&pn=Lumina%20Consulting%20Services&am=${data.order_amount}.00&tr=${data.order_id}&tn=Fee%20${data.order_id}&cu=INR`,
+      configuredMerchantUpi: activeMerchantUpiId || null,
+      upiIntentUri: upiIntentUri || null,
     });
   } catch (error: any) {
     console.error('Error creating Cashfree order:', error);
