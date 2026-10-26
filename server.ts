@@ -81,7 +81,15 @@ app.post('/api/create-cashfree-order', async (req, res) => {
     const cleanEmail = (customerEmail && customerEmail.includes('@')) ? customerEmail.trim() : 'applicant@gmail.com';
 
     // Construct reliable return and notification URLs
-    const clientOrigin = req.headers.origin || 'https://lumina-consalting-sevice.vercel.app';
+    let clientOrigin = req.body?.clientOrigin || req.headers.origin;
+    if (!clientOrigin && req.headers.referer) {
+      try {
+        clientOrigin = new URL(req.headers.referer).origin;
+      } catch {}
+    }
+    if (!clientOrigin) {
+      clientOrigin = 'https://lumina-consalting-sevice.vercel.app';
+    }
     const finalReturnUrl = returnUrl || `${clientOrigin}/?order_id={order_id}#receipt`;
     const finalNotifyUrl = `${clientOrigin}/api/cashfree-webhook`;
 

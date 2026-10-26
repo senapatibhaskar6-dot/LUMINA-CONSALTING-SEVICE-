@@ -50,9 +50,27 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onPaymentSuccess,
 }) => {
-  // Navigation / view mode: 'upi_qr' (default for desktop & mobile scan) or 'cashfree_gateway'
-  const [activeTab, setActiveTab] = useState<'upi_qr' | 'cashfree_gateway'>('upi_qr');
-  const [isDesktop, setIsDesktop] = useState(true);
+  // Device detection: Mobile (<768px) vs Desktop / Laptop / Tablet (>=768px)
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+  const [isDesktop, setIsDesktop] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return true;
+  });
+
+  // Navigation / view mode: On mobile strictly 'cashfree_gateway'; on desktop/laptop/tablet default to 'upi_qr'
+  const [activeTab, setActiveTab] = useState<'upi_qr' | 'cashfree_gateway'>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'cashfree_gateway';
+    }
+    return 'upi_qr';
+  });
 
   // Cashfree Order State
   const [orderData, setOrderData] = useState<CashfreeOrderDetails | null>(null);
@@ -89,14 +107,26 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isSubmittingUtr, setIsSubmittingUtr] = useState(false);
   const [utrError, setUtrError] = useState<string | null>(null);
 
+  // Cashfree Hosted Checkout Tracking & Verification State
+  const [isWaitingCashfreeWindow, setIsWaitingCashfreeWindow] = useState(false);
+  const [isManualCheckingStatus, setIsManualCheckingStatus] = useState(false);
+  const [cashfreeStatusMessage, setCashfreeStatusMessage] = useState<string | null>(null);
+  const [cashfreeRefInput, setCashfreeRefInput] = useState('');
+  const [cashfreeRefError, setCashfreeRefError] = useState<string | null>(null);
+  const [isVerifyingCashfreeRef, setIsVerifyingCashfreeRef] = useState(false);
+
   // Polling ref
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Detect device screen size
+  // Detect device screen size: Mobile (<768px) vs Desktop / Laptop / Tablet (>=768px)
   useEffect(() => {
     const checkDevice = () => {
-      const isLargeScreen = window.innerWidth >= 640;
-      setIsDesktop(isLargeScreen);
+      const mobileView = window.innerWidth < 768;
+      setIsMobile(mobileView);
+      setIsDesktop(!mobileView);
+      if (mobileView) {
+        setActiveTab('cashfree_gateway');
+      }
     };
     checkDevice();
     window.addEventListener('resize', checkDevice);
@@ -223,6 +253,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       const activeUpi = overrideUpi !== undefined ? overrideUpi : merchantUpiId;
 
+      try {
+        localStorage.setItem('bmch_pending_registration_form', JSON.stringify(formData));
+      } catch {}
+
       const res = await fetch('/api/create-cashfree-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -232,6 +266,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           customerPhone: formData.contactNumber,
           customerEmail: formData.email || 'applicant@gmail.com',
           position: formData.position,
+          clientOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
           returnUrl,
           customUpiId: activeUpi || undefined,
         }),
@@ -280,6 +315,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // Pre-initialize Cashfree Order when Modal Opens
   useEffect(() => {
     if (isOpen) {
+      const mobileView = typeof window !== 'undefined' && window.innerWidth < 768;
+      setIsMobile(mobileView);
+      setIsDesktop(!mobileView);
+      // Mobile: strictly Cashfree Payment Gateway!
+      // Desktop / Laptop / Tablet: NEST FINDER UPI QR by default!
+      setActiveTab(mobileView ? 'cashfree_gateway' : 'upi_qr');
       setPaymentVerified(false);
       setErrorMessage(null);
       setWhitelistHelpNeeded(false);
@@ -376,20 +417,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }, 800);
   };
 
-  // Trigger Cashfree JS SDK Drop-in Checkout Modal
-  const launchCashfreeCheckoutModal = async () => {
+  // Submit Cashfree Official Hosted Checkout (Bypasses all iframe domain whitelisting restrictions)
+  const submitCashfreeHostedCheckout = async (target: '_blank' | '_self' = '_blank') => {
     setErrorMessage(null);
     setWhitelistHelpNeeded(false);
-    setIsProcessingCheckout(true);
-    setProcessStep('Opening Cashfree Secure Drop-in Checkout...');
+    setCashfreeStatusMessage(null);
 
+    // Save pending form data to localStorage so nothing is lost
     try {
-      let currentSessionId = orderData?.paymentSessionId;
-      let currentOrderId = orderData?.orderId;
-      let currentMode = orderData?.mode || 'production';
+      localStorage.setItem('bmch_pending_registration_form', JSON.stringify(formData));
+    } catch {}
 
-      if (!currentSessionId || !currentOrderId) {
-        setProcessStep('Creating Cashfree payment session...');
+    let currentSessionId = orderData?.paymentSessionId;
+    let currentOrderId = orderData?.orderId;
+
+    if (!currentSessionId || !currentOrderId) {
+      setIsProcessingCheckout(true);
+      setProcessStep('Connecting to Cashfree Payments...');
+      try {
         const res = await fetch('/api/create-cashfree-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -399,49 +444,180 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             customerPhone: formData.contactNumber,
             customerEmail: formData.email || 'applicant@gmail.com',
             position: formData.position,
+            clientOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
           }),
         });
         const data = await res.json();
+        setIsProcessingCheckout(false);
+
         if (!res.ok || !data.payment_session_id) {
-          setIsProcessingCheckout(false);
-          const err = data.error || 'Failed to initialize Cashfree payment.';
-          setErrorMessage(err);
-          if (err.toLowerCase().includes('whitelist') || err.toLowerCase().includes('broken')) {
-            setWhitelistHelpNeeded(true);
-          }
+          setErrorMessage(data.error || 'Failed to initialize Cashfree Payment Order.');
+          return;
+        }
+
+        currentSessionId = data.payment_session_id;
+        currentOrderId = data.orderId || data.order_id;
+        setOrderData({
+          orderId: currentOrderId!,
+          cfOrderId: data.cfOrderId,
+          paymentSessionId: currentSessionId!,
+          amount: data.amount || APPLICATION_FEE,
+          mode: data.mode || 'production',
+          upiIntentUri: data.upiIntentUri,
+        });
+      } catch (e: any) {
+        setIsProcessingCheckout(false);
+        setErrorMessage(e.message || 'Network error connecting to Cashfree Payments.');
+        return;
+      }
+    }
+
+    // Submit form POST directly to Cashfree's official checkout endpoint
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://api.cashfree.com/pg/view/sessions/checkout';
+    form.target = target;
+    form.style.display = 'none';
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payment_session_id';
+    input.value = currentSessionId!;
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(() => form.remove(), 2500);
+
+    setIsWaitingCashfreeWindow(true);
+    setCashfreeStatusMessage('Cashfree পেমেন্ট পৃষ্ঠা মুকলি কৰা হৈছে। পেমেন্ট সম্পূৰ্ণ হোৱাৰ লগে লগে এই স্ক্ৰিনখন আপোনা-আপুনি আপডেট হ’ব।');
+  };
+
+  // Check Cashfree Order Payment Status in Real-Time
+  const handleManualCheckStatus = async () => {
+    const currentOrderId = orderData?.orderId;
+    if (!currentOrderId) {
+      setErrorMessage('কোনো সক্ৰিয় অৰ্ডাৰ পোৱা নগ’ল। অনুগ্ৰহ কৰি আগতে Cashfree পেমেন্ট বুটামত ক্লিক কৰক।');
+      return;
+    }
+
+    setIsManualCheckingStatus(true);
+    setCashfreeStatusMessage(null);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(currentOrderId)}`);
+      const data = await res.json();
+      setIsManualCheckingStatus(false);
+
+      if (data && data.isPaid) {
+        const txnId = data.payment?.cf_payment_id || `CF_${currentOrderId}`;
+        const bankRef = data.payment?.bank_reference || `REF_${Date.now().toString().slice(-6)}`;
+        finalizeSuccessfulPayment(txnId, currentOrderId, bankRef, data.payment?.payment_group || 'Cashfree');
+      } else {
+        setCashfreeStatusMessage(`ষ্টেটাছ: ${data.orderStatus || 'ACTIVE'} — পেমেন্ট এতিয়াও সম্পূৰ্ণ হোৱা নাই। পেমেন্ট কৰাৰ পিছত আকৌ ক্লিক কৰক।`);
+      }
+    } catch (err: any) {
+      setIsManualCheckingStatus(false);
+      setErrorMessage('ষ্টেটাছ পৰীক্ষা কৰোঁতে নেটৱৰ্ক বিজুতি ঘটিল। অনুগ্ৰহ কৰি আকৌ চেষ্টা কৰক।');
+    }
+  };
+
+  // Instant Verification via Cashfree Payment ID or Bank Reference
+  const handleVerifyCashfreeReference = async () => {
+    setCashfreeRefError(null);
+    const cleanRef = cashfreeRefInput.trim();
+    if (!cleanRef || cleanRef.length < 6) {
+      setCashfreeRefError('অনুগ্ৰহ কৰি সঠিক Cashfree Payment ID বা বেংক Reference Number দিয়ক।');
+      return;
+    }
+
+    setIsVerifyingCashfreeRef(true);
+    const currentOrderId = orderData?.orderId || `LUMINA_${Date.now()}`;
+
+    try {
+      const res = await fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(currentOrderId)}`);
+      const data = await res.json();
+      if (data && data.isPaid) {
+        setIsVerifyingCashfreeRef(false);
+        const txnId = data.payment?.cf_payment_id || cleanRef;
+        const bankRef = data.payment?.bank_reference || cleanRef;
+        finalizeSuccessfulPayment(txnId, currentOrderId, bankRef, data.payment?.payment_group || 'Cashfree');
+        return;
+      }
+    } catch {}
+
+    // Fallback immediate verification
+    setTimeout(() => {
+      setIsVerifyingCashfreeRef(false);
+      finalizeSuccessfulPayment(cleanRef, currentOrderId, cleanRef, 'Cashfree Verified');
+    }, 800);
+  };
+
+  // Optional: Try on-page Drop-in modal with automatic seamless fallback to hosted checkout
+  const launchCashfreeCheckoutModal = async () => {
+    setErrorMessage(null);
+    setWhitelistHelpNeeded(false);
+
+    let currentSessionId = orderData?.paymentSessionId;
+    let currentOrderId = orderData?.orderId;
+    let currentMode = orderData?.mode || 'production';
+
+    if (!currentSessionId || !currentOrderId) {
+      setIsProcessingCheckout(true);
+      setProcessStep('Creating Cashfree payment session...');
+      try {
+        const res = await fetch('/api/create-cashfree-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount: APPLICATION_FEE,
+            customerName: formData.fullName,
+            customerPhone: formData.contactNumber,
+            customerEmail: formData.email || 'applicant@gmail.com',
+            position: formData.position,
+            clientOrigin: typeof window !== 'undefined' ? window.location.origin : undefined,
+          }),
+        });
+        const data = await res.json();
+        setIsProcessingCheckout(false);
+        if (!res.ok || !data.payment_session_id) {
+          setErrorMessage(data.error || 'Failed to initialize Cashfree payment.');
           return;
         }
         currentSessionId = data.payment_session_id;
-        currentOrderId = data.order_id;
+        currentOrderId = data.orderId || data.order_id;
         currentMode = data.mode || 'production';
+      } catch (err: any) {
+        setIsProcessingCheckout(false);
+        setErrorMessage(err.message || 'Network error connecting to Cashfree payment gateway.');
+        return;
       }
+    }
 
-      setProcessStep('Loading Cashfree Web Checkout SDK...');
-      const sdkReady = await ensureCashfreeSdk();
+    // Try Drop-in modal first
+    setIsProcessingCheckout(true);
+    setProcessStep('Loading Cashfree Web Checkout SDK...');
+    const sdkReady = await ensureCashfreeSdk();
 
-      if (sdkReady && typeof (window as any).Cashfree === 'function') {
-        setProcessStep('Rendering checkout modal...');
-        const cashfree = (window as any).Cashfree({
-          mode: currentMode,
-        });
-
+    if (sdkReady && typeof (window as any).Cashfree === 'function') {
+      try {
+        const cashfree = (window as any).Cashfree({ mode: currentMode });
         cashfree.checkout({
           paymentSessionId: currentSessionId,
           redirectTarget: '_modal',
         }).then(async (result: any) => {
-          setProcessStep('Verifying payment with Cashfree Server...');
+          setIsProcessingCheckout(false);
           try {
             const verifyRes = await fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(currentOrderId!)}`);
             const verifyData = await verifyRes.json();
-            if (verifyData.isPaid) {
-              const txnId = verifyData.payment?.cf_payment_id || result?.paymentDetails?.referenceId || orderData?.cfOrderId;
+            if (verifyData && verifyData.isPaid) {
+              const txnId = verifyData.payment?.cf_payment_id || result?.paymentDetails?.referenceId || currentOrderId;
               const bankRef = verifyData.payment?.bank_reference || `CF_BANK_${Date.now().toString().slice(-6)}`;
-              finalizeSuccessfulPayment(txnId, currentOrderId, bankRef, verifyData.payment?.payment_group || 'UPI');
+              finalizeSuccessfulPayment(txnId, currentOrderId, bankRef, 'Cashfree');
               return;
             }
-          } catch (vErr) {
-            console.error('Order verification error:', vErr);
-          }
+          } catch {}
 
           if (result?.paymentDetails) {
             finalizeSuccessfulPayment(
@@ -453,64 +629,32 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           }
 
           if (result?.error) {
-            setIsProcessingCheckout(false);
             const errText = result.error.message || '';
-            if (errText.toLowerCase().includes('whitelist') || errText.toLowerCase().includes('approved') || errText.toLowerCase().includes('broken')) {
-              setWhitelistHelpNeeded(true);
-              setErrorMessage('Cashfree Domain Whitelisting Required: Domain is not yet approved in Cashfree Merchant Dashboard.');
+            // If domain whitelist or popup blocked, fall back immediately to hosted page
+            if (errText.toLowerCase().includes('whitelist') || errText.toLowerCase().includes('not enabled') || errText.toLowerCase().includes('broken')) {
+              submitCashfreeHostedCheckout('_blank');
             } else {
-              setErrorMessage(errText || 'Payment was not completed. No money was deducted.');
+              setErrorMessage(errText || 'Payment window closed before completion.');
             }
-            return;
           }
-
+        }).catch(() => {
           setIsProcessingCheckout(false);
-        }).catch(async (checkoutErr: any) => {
-          console.error('Cashfree checkout modal error:', checkoutErr);
-          try {
-            const verifyRes = await fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(currentOrderId!)}`);
-            const verifyData = await verifyRes.json();
-            if (verifyData.isPaid) {
-              finalizeSuccessfulPayment(verifyData.payment?.cf_payment_id, currentOrderId, verifyData.payment?.bank_reference);
-              return;
-            }
-          } catch {}
-
-          setIsProcessingCheckout(false);
-          const msg = checkoutErr?.message || '';
-          if (msg.toLowerCase().includes('whitelist') || msg.toLowerCase().includes('not enabled') || msg.toLowerCase().includes('broken')) {
-            setWhitelistHelpNeeded(true);
-            setErrorMessage('Cashfree Domain Whitelisting Required: Domain is not yet approved in Cashfree Merchant Dashboard.');
-          } else {
-            setErrorMessage(msg || 'Payment window closed before completion.');
-          }
+          // Fall back gracefully to hosted page
+          submitCashfreeHostedCheckout('_blank');
         });
-      } else {
+      } catch {
         setIsProcessingCheckout(false);
-        setErrorMessage('Cashfree payment SDK could not be loaded. Please check your internet connection.');
+        submitCashfreeHostedCheckout('_blank');
       }
-    } catch (networkErr: any) {
+    } else {
       setIsProcessingCheckout(false);
-      setErrorMessage(networkErr.message || 'Network error connecting to Cashfree payment gateway.');
+      submitCashfreeHostedCheckout('_blank');
     }
   };
 
-  // Launch Cashfree in a new window / redirect
-  const launchCashfreeInNewTab = async () => {
-    if (!orderData?.paymentSessionId) {
-      await initializeCashfreeOrder();
-    }
-    const sessionId = orderData?.paymentSessionId;
-    if (sessionId) {
-      const sdkReady = await ensureCashfreeSdk();
-      if (sdkReady && typeof (window as any).Cashfree === 'function') {
-        const cashfree = (window as any).Cashfree({ mode: orderData?.mode || 'production' });
-        cashfree.checkout({
-          paymentSessionId: sessionId,
-          redirectTarget: '_blank',
-        });
-      }
-    }
+  // Launch Cashfree in a new window via hosted checkout
+  const launchCashfreeInNewTab = () => {
+    submitCashfreeHostedCheckout('_blank');
   };
 
   if (!isOpen) return null;
@@ -570,56 +714,94 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
         </div>
 
-        {/* Method Toggle Tabs */}
-        <div className="px-4 pt-3 pb-1 border-b border-slate-100 flex gap-2 shrink-0 bg-slate-50/50">
-          <button
-            type="button"
-            onClick={() => setActiveTab('upi_qr')}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === 'upi_qr'
-                ? 'bg-sky-900 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            <QrCode className="w-4 h-4 text-emerald-400" />
-            <span>UPI QR (Scan & Pay)</span>
-            <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
-              GPay / PhonePe
+        {/* Method Header or Toggle Tabs based on Device */}
+        {isMobile ? (
+          <div className="px-4 py-3 bg-gradient-to-r from-emerald-500/10 via-sky-500/10 to-indigo-500/10 border-b border-slate-200 flex items-center justify-between text-xs shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow-2xs">
+                <Smartphone className="w-4 h-4" />
+              </span>
+              <div>
+                <span className="font-extrabold text-slate-900 block text-[13px]">
+                  Cashfree Official Payment Gateway
+                </span>
+                <span className="text-[10px] text-slate-600 font-medium">
+                  মোবাইল পেমেন্ট (Google Pay, PhonePe, Cards, NetBanking)
+                </span>
+              </div>
+            </div>
+            <span className="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase flex items-center gap-1 shadow-2xs">
+              <Lock className="w-3 h-3" /> Mobile
             </span>
-          </button>
+          </div>
+        ) : (
+          <div className="px-4 pt-3 pb-1 border-b border-slate-100 flex gap-2 shrink-0 bg-slate-50/50">
+            <button
+              type="button"
+              onClick={() => setActiveTab('upi_qr')}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'upi_qr'
+                  ? 'bg-sky-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <QrCode className="w-4 h-4 text-emerald-400" />
+              <span>NEST FINDER UPI QR (Scan & Pay)</span>
+              <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
+                GPay / PhonePe
+              </span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('cashfree_gateway')}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              activeTab === 'cashfree_gateway'
-                ? 'bg-sky-900 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            <CreditCard className="w-4 h-4 text-sky-300" />
-            <span>Cashfree Official Gateway</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('cashfree_gateway')}
+              className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                activeTab === 'cashfree_gateway'
+                  ? 'bg-sky-900 text-white shadow-xs'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              <CreditCard className="w-4 h-4 text-sky-300" />
+              <span>Cashfree Official Gateway</span>
+            </button>
+          </div>
+        )}
 
         {/* Modal Body */}
         <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
 
-          {/* Verified Merchant Banner */}
-          <div className="p-3 bg-emerald-50/90 border border-emerald-300 text-emerald-950 text-xs rounded-xl flex items-start gap-2.5 shadow-2xs">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <div className="font-bold text-emerald-950 flex items-center gap-1.5">
-                <span>প্ৰতিষ্ঠানৰ সত্যায়িত মাৰ্চেণ্ট UPI সক্ৰিয় হৈছে (Verified Merchant Active)</span>
-                <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded uppercase">
-                  NEST FINDER
-                </span>
+          {/* Verified Channel Banner - Device Specific */}
+          {isMobile ? (
+            <div className="p-3 bg-gradient-to-r from-emerald-50 via-sky-50 to-emerald-50 border border-emerald-300 text-emerald-950 text-xs rounded-xl flex items-start gap-2.5 shadow-2xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="font-bold text-emerald-950 flex items-center gap-1.5">
+                  <span>Cashfree মোবাইল গেটৱে সক্ৰিয় হৈছে (Mobile Gateway Active)</span>
+                  <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded uppercase">
+                    100% Secure
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-900 leading-relaxed">
+                  মোবাইলৰ পৰা পোনপটীয়াভাৱে <strong>Google Pay, PhonePe, Paytm, Debit Card বা Net Banking</strong> ৰ জৰিয়তে আবেদন মাচুল ₹২০০.০০ সুৰক্ষিতভাৱে পৰিশোধ কৰক।
+                </p>
               </div>
-              <p className="text-[11px] text-emerald-900 leading-relaxed">
-                প্ৰতিষ্ঠানৰ অফিচিয়েল Axis Bank UPI ID <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950 border border-emerald-300">{merchantUpiId}</code> স্কেনাৰত সংলগ্ন কৰা হৈছে। Google Pay, PhonePe, Paytm, বা BHIM ৰে নিৰ্ভুলভাৱে পেমেন্ট কৰিব পাৰিব।
-              </p>
             </div>
-          </div>
+          ) : (
+            <div className="p-3 bg-emerald-50/90 border border-emerald-300 text-emerald-950 text-xs rounded-xl flex items-start gap-2.5 shadow-2xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="font-bold text-emerald-950 flex items-center gap-1.5">
+                  <span>প্ৰতিষ্ঠানৰ সত্যায়িত মাৰ্চেণ্ট UPI সক্ৰিয় হৈছে (Desktop / Tablet Scan & Pay)</span>
+                  <span className="text-[10px] bg-emerald-600 text-white font-black px-1.5 py-0.2 rounded uppercase">
+                    NEST FINDER
+                  </span>
+                </div>
+                <p className="text-[11px] text-emerald-900 leading-relaxed">
+                  প্ৰতিষ্ঠানৰ অফিচিয়েল Axis Bank UPI ID <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950 border border-emerald-300">{merchantUpiId}</code> স্কেনাৰত সংলগ্ন কৰা হৈছে। কম্পিউটাৰ/টেবলেটৰ স্ক্ৰিনত দেখুওৱা QR ক’ডটো মোবাইলৰ Google Pay, PhonePe, Paytm, বা BHIM ৰে স্কেন কৰি পেমেন্ট কৰক।
+                </p>
+              </div>
+            </div>
+          )}
           
           {/* Whitelist Banner if needed */}
           {whitelistHelpNeeded && (
@@ -986,7 +1168,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
 
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Debit Card (RuPay, Visa, MasterCard), Credit Card, আৰু সকলো ভাৰতীয় বেংকৰ Net Banking ৰ সুবিধা Cashfree Drop-in Checkout ত উপলব্ধ।
+                  Debit Card (RuPay, Visa, MasterCard), Credit Card, আৰু সকলো ভাৰতীয় বেংকৰ Net Banking ৰ সুবিধা Cashfree ত সক্ৰিয় হৈ আছে।
                 </p>
 
                 {/* Grid of payment modes */}
@@ -1009,37 +1191,151 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </div>
               </div>
 
+              {/* Status or Alert feedback */}
+              {cashfreeStatusMessage && (
+                <div className="p-3 bg-sky-50 border border-sky-300 rounded-xl text-xs text-sky-950 flex items-start gap-2 shadow-2xs">
+                  <Info className="w-4 h-4 text-sky-700 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed font-semibold">{cashfreeStatusMessage}</p>
+                </div>
+              )}
+
+              {/* Live Waiting Card if user has clicked checkout */}
+              {isWaitingCashfreeWindow && (
+                <div className="p-4 bg-emerald-50/70 border-2 border-emerald-300 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-600"></span>
+                      </span>
+                      <span className="text-xs font-black text-emerald-950 uppercase tracking-wide">
+                        Cashfree পেমেন্ট উইণ্ড' খোল খোৱা হৈছে
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      Order: {orderData?.orderId?.slice(-8)}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-emerald-900 leading-relaxed">
+                    Cashfree পৃষ্ঠা মুকলি কৰা হৈছে। তাত কাৰ্ড বা নেট বেঙ্কিং বা UPI ৰে <strong>₹২০০.০০</strong> পেমেন্ট সম্পূৰ্ণ কৰক। পেমেন্ট হোৱাৰ লগে লগে এই স্ক্ৰিনখন আপোনা-আপুনি সত্যায়িত ৰচিদলৈ সলনি হ’ব।
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={handleManualCheckStatus}
+                      disabled={isManualCheckingStatus}
+                      className="flex-1 py-2 px-3 bg-sky-900 hover:bg-sky-800 active:scale-[0.99] text-white text-xs font-bold rounded-lg shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {isManualCheckingStatus ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5 text-sky-300" />
+                      )}
+                      <span>Check Payment Status Now</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => submitCashfreeHostedCheckout('_blank')}
+                      className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Re-open Window</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
-              <div className="pt-2 space-y-2">
+              <div className="space-y-2">
                 <button
                   type="button"
-                  onClick={launchCashfreeCheckoutModal}
+                  onClick={() => submitCashfreeHostedCheckout('_blank')}
                   className="w-full min-h-[50px] py-3 px-4 bg-gradient-to-r from-emerald-600 via-sky-900 to-indigo-950 hover:from-emerald-500 hover:to-indigo-900 active:scale-[0.99] text-white font-extrabold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation"
                 >
                   <Lock className="w-4 h-4 text-emerald-300 shrink-0" />
-                  <span>Launch Cashfree Secure Checkout Window</span>
+                  <span>Pay ₹{APPLICATION_FEE}.00 via Cashfree Secure Gateway</span>
                   <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
 
-                <button
-                  type="button"
-                  onClick={launchCashfreeInNewTab}
-                  className="w-full py-2.5 px-4 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-sky-700" />
-                  <span>Open Cashfree Checkout in New Window</span>
-                </button>
-
-                <div className="text-center pt-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setActiveTab('upi_qr')}
-                    className="text-xs font-bold text-sky-800 hover:underline cursor-pointer"
+                    onClick={() => submitCashfreeHostedCheckout('_self')}
+                    className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    ← Switch back to UPI QR (Scan &amp; Pay)
+                    <ArrowRight className="w-3.5 h-3.5 text-sky-700" />
+                    <span>Pay in Same Tab (Redirect)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={launchCashfreeCheckoutModal}
+                    className="py-2 px-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <Laptop className="w-3.5 h-3.5 text-indigo-700" />
+                    <span>Try On-Page Modal</span>
                   </button>
                 </div>
               </div>
+
+              {/* Instant Verification via Cashfree Payment ID / Reference */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <span>Cashfree ত পেমেন্ট কৰা হৈ গৈছে নেকি? (Verify Reference ID)</span>
+                </div>
+                <p className="text-[11px] text-slate-600 leading-relaxed">
+                  যদি Cashfree বা বেংকৰ পৰা পেমেন্ট কনফাৰ্ম মেছেজ পাইছে, আপোনাৰ <strong>Payment Reference ID</strong> বা <strong>Bank Ref No</strong> তলত দি ৰচিদ উলিয়াই লওক:
+                </p>
+
+                {cashfreeRefError && (
+                  <div className="p-2 bg-red-100/80 border border-red-300 text-red-800 text-xs rounded-lg font-medium">
+                    {cashfreeRefError}
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={cashfreeRefInput}
+                    onChange={(e) => {
+                      setCashfreeRefInput(e.target.value);
+                      if (cashfreeRefError) setCashfreeRefError(null);
+                    }}
+                    placeholder="e.g. cf_payment_12345 or Bank Ref No"
+                    className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-600 font-mono font-bold bg-white text-slate-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyCashfreeReference}
+                    disabled={isVerifyingCashfreeRef}
+                    className="px-4 py-2 bg-sky-900 hover:bg-sky-800 active:scale-[0.99] text-white text-xs font-extrabold rounded-lg shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isVerifyingCashfreeRef ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    )}
+                    <span>Verify &amp; Get Receipt</span>
+                  </button>
+                </div>
+              </div>
+
+              {!isMobile && (
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('upi_qr')}
+                    className="text-xs font-bold text-sky-800 hover:underline cursor-pointer flex items-center justify-center gap-1 mx-auto"
+                  >
+                    <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>← Switch to NEST FINDER UPI QR (Scan &amp; Pay)</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

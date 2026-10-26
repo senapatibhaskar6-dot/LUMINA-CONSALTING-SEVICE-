@@ -115,6 +115,14 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const orderIdParam = params.get('order_id');
     if (orderIdParam) {
+      let restoredFormData: RegistrationFormData | null = pendingFormData;
+      try {
+        const stored = localStorage.getItem('bmch_pending_registration_form');
+        if (stored) {
+          restoredFormData = JSON.parse(stored);
+        }
+      } catch {}
+
       fetch(`/api/verify-cashfree-order?order_id=${encodeURIComponent(orderIdParam)}`)
         .then((res) => res.json())
         .then((data) => {
@@ -135,7 +143,7 @@ export default function App() {
                 registrationId: newRegId,
                 receiptNumber: newReceiptNo,
                 createdAt: new Date().toISOString(),
-                formData: pendingFormData || {
+                formData: restoredFormData || {
                   position: 'Unarmed Security Guard',
                   fullName: data.payment?.customer_name || 'Registered Applicant',
                   fatherName: 'Not Specified',
