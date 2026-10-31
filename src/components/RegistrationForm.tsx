@@ -236,7 +236,7 @@ export const RegistrationForm: React.FC<RegistrationFormProps> = ({
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-600 font-medium mt-0.5">
-              আবেদন প্ৰক্ৰিয়া ৩১/১১/২০২৬ তাৰিখলৈ সক্ৰিয় থাকিব। অনুগ্ৰহ কৰি অন্তিম তাৰিখৰ পূৰ্বে আবেদন জমা কৰক।
+              আবেদন প্ৰক্ৰিয়া ৩০/১১/২০২৬ তাৰিখলৈ সক্ৰিয় থাকিব। অনুগ্ৰহ কৰি অন্তিম তাৰিখৰ পূৰ্বে আবেদন জমা কৰক।
             </p>
           </div>
         </div>

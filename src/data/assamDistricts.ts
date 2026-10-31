@@ -87,5 +87,5 @@ export const INSTITUTION_FULL_NAME = 'Fakhruddin Ali Ahmed Medical College & Hos
 export const AGENCY_NAME = 'LUMINA BUSINESS CONSULTING SERVICES';
 export const AGENCY_ADDRESS = 'Bharalu, Guwahati-781009, Kamrup(M), Assam';
 export const AGENCY_FULL_DETAILS = 'Lumina Business Consulting Services, Bharalu, Guwahati-781009, Kamrup(M), Assam';
-export const REGISTRATION_LAST_DATE = '31/11/2026';
-export const REGISTRATION_LAST_DATE_DISPLAY = '31/11/2026';
+export const REGISTRATION_LAST_DATE = '30/11/2026';
+export const REGISTRATION_LAST_DATE_DISPLAY = '30/11/2026';

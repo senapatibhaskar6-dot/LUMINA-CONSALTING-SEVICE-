@@ -401,7 +401,7 @@ export default function App() {
                     <div className="text-[11px] text-amber-200/80">Cashfree Live Gateway / Receipt</div>
                   </div>
 
-                  {/* USER REQUESTED: Registration Last Date 31/11/2026 */}
+                  {/* USER REQUESTED: Registration Last Date 30/11/2026 */}
                   <div className="bg-rose-500/25 backdrop-blur-xs p-3 sm:p-3.5 rounded-xl border-2 border-rose-400/60 shadow-xs">
                     <div className="text-xs text-rose-200 font-extrabold flex items-center gap-1">
                       <Calendar className="w-3.5 h-3.5 text-rose-300 shrink-0" />
@@ -411,7 +411,7 @@ export default function App() {
                       {REGISTRATION_LAST_DATE}
                     </div>
                     <div className="text-[11px] text-rose-200 font-medium">
-                      আবেদনৰ শেষ তাৰিখ: ৩১/১১/২০২৬
+                      আবেদনৰ শেষ তাৰিখ: ৩০/১১/২০২৬
                     </div>
                   </div>
                 </div>
